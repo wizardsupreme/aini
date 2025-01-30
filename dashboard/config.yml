@@ -1,0 +1,66 @@
+
+---
+title: "AINI Dashboard"
+subtitle: "AI Nomad Infrastructure"
+logo: "assets/logo.svg"
+header: true
+footer: '<p>AINI - AI Nomad Infrastructure</p>'
+
+theme: default
+
+services:
+  - name: "Setup & Configuration"
+    icon: "fas fa-cog"
+    items:
+      - name: "Initial Setup"
+        subtitle: "Configure AINI"
+        tag: "setup"
+        url: "/setup.html"
+        target: "_self"
+      - name: "Configuration"
+        subtitle: "Manage Settings"
+        tag: "config"
+        url: "/config.html"
+        target: "_self"
+
+  - name: "Infrastructure"
+    icon: "fas fa-server"
+    items:
+      - name: "Consul"
+        logo: "assets/tools/consul.png"
+        subtitle: "Service Discovery & State Management"
+        tag: "system"
+        url: "http://localhost:8500"
+        target: "_blank"
+      - name: "App Server"
+        logo: "assets/tools/server.png"
+        subtitle: "Application Server Status"
+        tag: "system"
+        url: "#"
+        type: "ApiState"
+        endpoint: "http://***REMOVED***-control:8080/status/app"
+      - name: "GPU Server"
+        logo: "assets/tools/gpu.png"
+        subtitle: "GPU Server Status"
+        tag: "system"
+        url: "#"
+        type: "ApiState"
+        endpoint: "http://***REMOVED***-control:8080/status/gpu"
+
+  - name: "Quick Actions"
+    icon: "fas fa-bolt"
+    items:
+      - name: "Start App Server"
+        subtitle: "Deploy application server"
+        tag: "action"
+        url: "http://***REMOVED***-control:8080/start/app"
+        type: "ApiButton"
+      - name: "Start GPU Server"
+        subtitle: "Deploy GPU server"
+        tag: "action"
+        url: "http://***REMOVED***-control:8080/start/gpu"
+        type: "ApiButton"
+      - name: "View Logs"
+        subtitle: "System logs"
+        url: "/logs.html"
+        target: "_self"

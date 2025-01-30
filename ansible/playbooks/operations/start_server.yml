@@ -1,0 +1,32 @@
+---
+- name: Manage cloud server
+  hosts: localhost
+  gather_facts: false
+  vars:
+    hcloud_token: "{{ lookup('env', 'HCLOUD_TOKEN') }}"
+    server_name: "***REMOVED***-{{ target }}"
+    server_type: "{{ lookup('env', 'APP_SERVER_TYPE') if target == 'app' else lookup('env', 'GPU_SERVER_TYPE') }}"
+    image: "ubuntu-22.04"
+    location: "fsn1"
+
+  tasks:
+    - name: Create Hetzner server
+      hetzner.hcloud.hcloud_server:
+        api_token: "{{ hcloud_token }}"
+        name: "{{ server_name }}"
+        server_type: "{{ server_type }}"
+        image: "{{ image }}"
+        location: "{{ location }}"
+        state: present
+      register: server
+
+    - name: Wait for server to be ready
+      wait_for:
+        host: "{{ server.hcloud_server.ipv4_address }}"
+        port: 22
+        timeout: 300
+
+    - name: Add server to inventory
+      add_host:
+        name: "{{ server.hcloud_server.ipv4_address }}"
+        groups: new_servers

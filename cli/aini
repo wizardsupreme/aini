@@ -1,0 +1,95 @@
+#!/usr/bin/env python3
+
+import click
+from rich.console import Console
+import os
+import yaml
+import subprocess
+import json
+from pathlib import Path
+
+console = Console()
+
+def get_state_manager():
+    """Get appropriate state manager based on configuration"""
+    use_consul = os.getenv('USE_CONSUL', 'true').lower() == 'true'
+    
+    if use_consul:
+        import consul
+        return consul.Consul()
+    else:
+        return FileStateManager()
+
+class FileStateManager:
+    """Simple file-based state management"""
+    def __init__(self):
+        self.state_file = Path.home() / '.***REMOVED***' / 'state.json'
+        self.state_file.parent.mkdir(exist_ok=True)
+        if not self.state_file.exists():
+            self.state_file.write_text('{}')
+
+    def get(self, key):
+        state = json.loads(self.state_file.read_text())
+        return state.get(key)
+
+    def put(self, key, value):
+        state = json.loads(self.state_file.read_text())
+        state[key] = value
+        self.state_file.write_text(json.dumps(state, indent=2))
+
+@click.group()
+def cli():
+    """AINI - AI Nomad Infrastructure management tool"""
+    pass
+
+@cli.command()
+@click.argument('target', type=click.Choice(['app', 'gpu']))
+def start(target):
+    """Start a server (app or gpu)"""
+    # Validate environment
+    if not os.getenv('HCLOUD_TOKEN'):
+        console.print("[red]Error:[/red] HCLOUD_TOKEN not set in environment")
+        return
+    
+    server_type_var = 'APP_SERVER_TYPE' if target == 'app' else 'GPU_SERVER_TYPE'
+    if not os.getenv(server_type_var):
+        console.print(f"[red]Error:[/red] {server_type_var} not set in environment")
+        return
+
+    console.print(f"Starting {target} server...")
+    subprocess.run(['ansible-playbook', 
+                   f'ansible/playbooks/operations/start_server.yml',
+                   '-e', f'target={target}'])
+
+@cli.command()
+@click.argument('target', type=click.Choice(['app', 'gpu']))
+def stop(target):
+    """Stop a server (app or gpu)"""
+    console.print(f"Stopping {target} server...")
+    subprocess.run(['ansible-playbook', 
+                   f'ansible/playbooks/operations/stop_server.yml',
+                   '-e', f'target={target}'])
+
+@cli.command()
+def status():
+    """Show infrastructure status"""
+    state_manager = get_state_manager()
+    
+    # Check if servers exist
+    app_server = state_manager.get('app_server')
+    gpu_server = state_manager.get('gpu_server')
+    
+    console.print("\n[bold]AINI Infrastructure Status:[/bold]\n")
+    
+    if not app_server and not gpu_server:
+        console.print("No servers currently running.")
+        return
+    
+    if app_server:
+        console.print(f"App Server: {app_server['ip']} ({app_server['status']})")
+    
+    if gpu_server:
+        console.print(f"GPU Server: {gpu_server['ip']} ({gpu_server['status']})")
+
+if __name__ == '__main__':
+    cli()

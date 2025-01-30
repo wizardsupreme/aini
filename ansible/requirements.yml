@@ -1,0 +1,8 @@
+---
+collections:
+  - name: hetzner.hcloud
+  - name: community.general
+
+roles:
+  - name: geerlingguy.docker
+  - name: geerlingguy.pip
