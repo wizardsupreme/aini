@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AINI Status</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css">
+</head>
+<body class="bg-gray-50">
+    <div class="container mx-auto px-4 py-8 max-w-3xl">
+        <div class="bg-white p-8 rounded-lg shadow-lg">
+            <h1 class="text-3xl font-bold mb-8">System Status</h1>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Infrastructure Status -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h2 class="text-xl font-semibold mb-4">Infrastructure</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <p class="text-gray-600">App Server</p>
+                            <p id="appStatus" class="font-semibold">Loading...</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-600">GPU Server</p>
+                            <p id="gpuStatus" class="font-semibold">Loading...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- State Storage -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h2 class="text-xl font-semibold mb-4">State Storage</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <p class="text-gray-600">Consul</p>
+                            <p id="consulStatus" class="font-semibold">Loading...</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-600">S3 Storage</p>
+                            <p id="s3Status" class="font-semibold">Loading...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resource Usage -->
+            <div class="mt-8 bg-gray-50 p-4 rounded-lg">
+                <h2 class="text-xl font-semibold mb-4">Resource Usage</h2>
+                <div class="space-y-4">
+                    <div id="appServerResources" class="hidden">
+                        <h3 class="font-medium mb-2">App Server</h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-gray-600">CPU Usage</p>
+                                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                    <div id="appCpuBar" class="bg-blue-600 h-2.5 rounded-full" style="width

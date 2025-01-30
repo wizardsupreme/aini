@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AINI Server Management</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css">
+</head>
+<body class="bg-gray-50">
+    <div class="container mx-auto px-4 py-8 max-w-3xl">
+        <div id="serverInfo" class="bg-white p-8 rounded-lg shadow-lg">
+            <h1 class="text-3xl font-bold mb-8" id="serverTitle">Server Management</h1>
+            
+            <div class="mb-8 p-4 rounded-lg bg-gray-50">
+                <h2 class="text-xl font-semibold mb-4">Server Status</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-gray-600">Status</p>
+                        <p id="status" class="font-semibold">Loading...</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-600">IP Address</p>
+                        <p id="ip" class="font-semibold">-</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-600">Server Type</p>
+                        <p id="type" class="font-semibold">-</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-600">Uptime</p>
+                        <p id="uptime" class="font-semibold">-</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <button id="startBtn" class="w-full py-2 px-4 bg-green-600 text-white rounded hover:bg-green-700">
+                    Start Server
+                </button>
+                <button id="stopBtn" class="w-full py-2 px-4 bg-red-600 text-white rounded hover:bg-red-700">
+                    Stop Server
+                </button>
+            </div>
+
+            <div class="mt-8">
+                <h2 class="text-xl font-semibold mb-4">Server Logs</h2>
+                <pre id="logs" class="bg-gray-900 text-gray-100 p-4 rounded-lg h-64 overflow-auto">Loading logs...</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Get server type from URL
+        const params = new URLSearchParams(window.location.search);
+        const serverType = params.get('type');
+        document.getElementById('serverTitle').textContent = 
+            `${serverType.toUpperCase()} Server Management`;
+
+        // Function to update status
+        async function updateStatus() {
+            try {
+                const response = await fetch(`/api/status/${serverType}`);
+                const data = await response.json();
+                
+                document.getElementById('status').textContent = data.status;
+                document.getElementById('ip').textContent = data.ip || '-';
+                document.getElementById('type').textContent = data.server_type || '-';
+                document.getElementById('uptime').textContent = data.uptime || '-';
+                
+                // Update button states
+                document.getElementById('startBtn').disabled = data.status === 'running';
+                document.getElementById('stopBtn').disabled = data.status !== 'running';
+            } catch (error) {
+                console.error('Error fetching status:', error);
+            }
+        }
+
+        // Function to fetch logs
+        async function updateLogs() {
+            try {
+                const response = await fetch(`/api/logs/${serverType}`);
+                const data = await response.json();
+                document.getElementById('logs').textContent = data.logs || 'No logs available';
+            } catch (error) {
+                console.error('Error fetching logs:', error);
+            }
+        }
+
+        // Button event listeners
+        document.getElementById('startBtn').addEventListener('click', async () => {
+            try {
+                await fetch(`/api/start/${serverType}`, { method: 'POST' });
+                updateStatus();
+            } catch (error) {
+                console.error('Error starting server:', error);
+            }
+        });
+
+        document.getElementById('stopBtn').addEventListener('click', async () => {
+            try {
+                await fetch(`/api/stop/${serverType}`, { method: 'POST' });
+                updateStatus();
+            } catch (error) {
+                console.error('Error stopping server:', error);
+            }
+        });
+
+        // Initial update
+        updateStatus();
+        updateLogs();
+
+        // Update status every 30 seconds
+        setInterval(updateStatus, 30000);
+        // Update logs every minute
+        setInterval(updateLogs, 60000);
+    </script>
+</body>
+</html>

@@ -2,16 +2,16 @@ version: '3.8'
 
 services:
   consul:
-    image: progrium/consul:latest
+    image: hashicorp/consul:1.16
     container_name: ***REMOVED***-consul
     volumes:
-      - ${STORAGE_TYPE:-.***REMOVED***-state}/consul:/consul/data
+      - .***REMOVED***-state/consul:/consul/data
     networks:
       - ***REMOVED***-net
     ports:
       - "8500:8500"
       - "8600:8600/udp"
-    command: -server -bootstrap -ui-dir /ui
+    command: 'agent -server -bootstrap-expect=1 -ui -client=0.0.0.0'
 
   ***REMOVED***-control:
     build:
@@ -42,15 +42,13 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - ./dashboard/assets:/www/assets
-      - ./dashboard/config.yml:/www/config.yml
+      - ./dashboard:/www
     environment:
-      - INIT_ASSETS=0  # Don't overwrite our custom assets
+      - INIT_ASSETS=0
     networks:
       - ***REMOVED***-net
     depends_on:
       - ***REMOVED***-control
-      - consul
 
 networks:
   ***REMOVED***-net:

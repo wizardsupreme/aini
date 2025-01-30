@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AINI Setup</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css">
+</head>
+<body class="bg-gray-50">
+    <div class="container mx-auto px-4 py-8 max-w-3xl">
+        <h1 class="text-3xl font-bold mb-8 text-center">Welcome to AINI</h1>
+        
+        <div class="bg-white p-8 rounded-lg shadow-lg">
+            <form id="setupForm" class="space-y-6">
+                <div>
+                    <h2 class="text-xl font-semibold mb-4">Cloud Provider Configuration</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Hetzner Cloud Token</label>
+                            <input type="password" name="HCLOUD_TOKEN" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h2 class="text-xl font-semibold mb-4">Server Types</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">App Server Type</label>
+                            <select name="APP_SERVER_TYPE" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <option value="cax11">CAX11 (2 vCPU, 4GB RAM)</option>
+                                <option value="cax21">CAX21 (4 vCPU, 8GB RAM)</option>
+                                <option value="cax31" selected>CAX31 (8 vCPU, 16GB RAM)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">GPU Server Type</label>
+                            <select name="GPU_SERVER_TYPE" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <option value="ccx63" selected>CCX63 (32 vCPU, 128GB RAM)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h2 class="text-xl font-semibold mb-4">State Storage (Optional)</h2>
+                    <div class="space-y-4">
+                        <label class="flex items-center">
+                            <input type="checkbox" name="S3_ENABLED" class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <span class="ml-2">Enable S3-compatible Storage</span>
+                        </label>
+                        
+                        <div id="s3Fields" class="space-y-4 hidden">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">S3 Endpoint</label>
+                                <input type="text" name="S3_ENDPOINT" placeholder="e.g., s3.wasabisys.com" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Access Key</label>
+                                <input type="text" name="S3_ACCESS_KEY" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Secret Key</label>
+                                <input type="password" name="S3_SECRET_KEY" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Bucket Name</label>
+                                <input type="text" name="S3_BUCKET" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-5">
+                    <div class="flex justify-end">
+                        <button type="submit" class="ml-3 inline-flex justify-center rounded-md border border-transparent bg-blue-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                            Save Configuration
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.querySelector('[name="S3_ENABLED"]').addEventListener('change', function(e) {
+            document.getElementById('s3Fields').style.display = e.target.checked ? 'block' : 'none';
+        });
+
+        document.getElementById('setupForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+            
+            try {
+                const response = await fetch('/api/setup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                if (result.status === 'success') {
+                    alert('Configuration saved successfully!');
+                    window.location.href = '/';
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (error) {
+                alert('Error saving configuration: ' + error.message);
+            }
+        });
+    </script>
+</body>
+</html>

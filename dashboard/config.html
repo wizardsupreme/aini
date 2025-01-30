@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AINI Configuration</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css">
+</head>
+<body class="bg-gray-50">
+    <div class="container mx-auto px-4 py-8 max-w-3xl">
+        <div class="bg-white p-8 rounded-lg shadow-lg">
+            <h1 class="text-3xl font-bold mb-8">System Configuration</h1>
+            
+            <div id="currentConfig" class="mb-8">
+                <h2 class="text-xl font-semibold mb-4">Current Configuration</h2>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <pre id="configJson" class="whitespace-pre-wrap"></pre>
+                </div>
+            </div>
+
+            <form id="configForm" class="space-y-6">
+                <div>
+                    <h2 class="text-xl font-semibold mb-4">Update Configuration</h2>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Hetzner Token</label>
+                            <input type="password" name="HCLOUD_TOKEN" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">App Server Type</label>
+                            <select name="APP_SERVER_TYPE" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                                <option value="cax11">CAX11 (2 vCPU, 4GB RAM)</option>
+                                <option value="cax21">CAX21 (4 vCPU, 8GB RAM)</option>
+                                <option value="cax31">CAX31 (8 vCPU, 16GB RAM)</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">GPU Server Type</label>
+                            <select name="GPU_SERVER_TYPE" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                                <option value="ccx63">CCX63 (32 vCPU, 128GB RAM)</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="flex items-center">
+                                <input type="checkbox" name="S3_ENABLED" class="rounded border-gray-300">
+                                <span class="ml-2">Enable S3 Storage</span>
+                            </label>
+                        </div>
+
+                        <div id="s3Fields" class="space-y-4 hidden">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">S3 Endpoint</label>
+                                <input type="text" name="S3_ENDPOINT" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Access Key</label>
+                                <input type="text" name="S3_ACCESS_KEY" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Secret Key</label>
+                                <input type="password" name="S3_SECRET_KEY" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Bucket</label>
+                                <input type="text" name="S3_BUCKET" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-5">
+                    <div class="flex justify-end">
+                        <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                            Save Changes
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Toggle S3 fields
+        document.querySelector('[name="S3_ENABLED"]').addEventListener('change', function(e) {
+            document.getElementById('s3Fields').style.display = e.target.checked ? 'block' : 'none';
+        });
+
+        // Load current config
+        async function loadConfig() {
+            try {
+                const response = await fetch('/api/config');
+                const config = await response.json();
+                
+                document.getElementById('configJson').textContent = 
+                    JSON.stringify(config, null, 2);
+
+                // Pre-fill form
+                Object.entries(config).forEach(([key, value]) => {
+                    const input = document.querySelector(`[name="${key}"]`);
+                    if (input) {
+                        if (input.type === 'checkbox') {
+                            input.checked = value === 'true';
+                        } else {
+                            input.value = value;
+                        }
+                    }
+                });
+
+                // Show/hide S3 fields
+                const s3Enabled = config.S3_ENABLED === 'true';
+                document.getElementById('s3Fields').style.display = 
+                    s3Enabled ? 'block' : 'none';
+            } catch (error) {
+                console.error('Error loading config:', error);
+            }
+        }
+
+        // Submit form
+        document.getElementById('configForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+            
+            try {
+                const response = await fetch('/api/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                if (response.ok) {
+                    alert('Configuration updated successfully!');
+                    loadConfig();
+                } else {
+                    alert('Error updating configuration');
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        });
+
+        // Initial load
+        loadConfig();
+    </script>
+</body>
+</html>

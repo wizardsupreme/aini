@@ -21,12 +21,14 @@ WORKDIR /***REMOVED***
 # Copy AINI CLI tool and configurations
 COPY cli /***REMOVED***/cli
 COPY ansible /***REMOVED***/ansible
+COPY scripts/entrypoint.sh /entrypoint.sh
 
-# Make CLI executable
-RUN chmod +x /***REMOVED***/cli/***REMOVED***
+# Make executables
+RUN chmod +x /***REMOVED***/cli/***REMOVED*** /entrypoint.sh
 
 # Add to PATH
 ENV PATH="/***REMOVED***/cli:${PATH}"
 
-# Default command shows help
+# Entry point handles initialization
+ENTRYPOINT ["/entrypoint.sh"]
 CMD ["***REMOVED***", "--help"]
