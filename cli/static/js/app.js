@@ -192,7 +192,7 @@ const ThemeProvider = ({ children }) => {
     );
 };
 
-// Update the ThemeToggle component with monochrome icons
+// Update the ThemeToggle component
 const ThemeToggle = () => {
     const { theme, toggleTheme } = React.useContext(ThemeContext);
     
@@ -203,9 +203,16 @@ const ThemeToggle = () => {
             className="relative inline-flex items-center justify-center w-10 h-10 rounded-lg bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors"
             aria-label="Toggle theme"
         >
-            {/* Sun icon */}
+            {/* Moon icon - show in light mode */}
             <span className={`absolute transition-opacity ${theme === 'dark' ? 'opacity-0' : 'opacity-100'}`}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-600">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                </svg>
+            </span>
+            
+            {/* Sun icon - show in dark mode */}
+            <span className={`absolute transition-opacity ${theme === 'light' ? 'opacity-0' : 'opacity-100'}`}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400">
                     <circle cx="12" cy="12" r="5" />
                     <line x1="12" y1="1" x2="12" y2="3" />
                     <line x1="12" y1="21" x2="12" y2="23" />
@@ -217,16 +224,19 @@ const ThemeToggle = () => {
                     <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
                 </svg>
             </span>
-            
-            {/* Moon icon */}
-            <span className={`absolute transition-opacity ${theme === 'light' ? 'opacity-0' : 'opacity-100'}`}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400">
-                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-                </svg>
-            </span>
         </button>
     );
 };
+
+// Add RefreshIcon component
+const RefreshIcon = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <path d="M21 2v6h-6"></path>
+        <path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path>
+        <path d="M3 22v-6h6"></path>
+        <path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path>
+    </svg>
+);
 
 const Dashboard = () => {
     const [servers, setServers] = useState({
@@ -352,7 +362,6 @@ const Dashboard = () => {
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-bold dark:text-white">AINI Dashboard</h1>
                 <div className="flex items-center gap-4">
-                    <ThemeToggle />
                     {lastUpdated && (
                         <span className="text-sm text-gray-500 dark:text-gray-400">
                             Last updated: {lastUpdated}
@@ -361,12 +370,16 @@ const Dashboard = () => {
                     <button 
                         type="button"
                         onClick={() => fetchStatus(true)}
-                        className="px-3 py-1 bg-blue-50 dark:bg-blue-900 text-blue-600 dark:text-blue-300 rounded hover:bg-blue-100 dark:hover:bg-blue-800 flex items-center gap-2"
+                        className="p-2 rounded-lg bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors"
                         disabled={loading}
+                        aria-label="Refresh"
                     >
-                        {loading && <SpinnerIcon className="h-4 w-4" />}
-                        Refresh
+                        {loading ? 
+                            <SpinnerIcon className="h-5 w-5 text-gray-600 dark:text-gray-400" /> :
+                            <RefreshIcon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                        }
                     </button>
+                    <ThemeToggle />
                 </div>
             </div>
             
