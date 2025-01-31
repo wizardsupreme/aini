@@ -1,6 +1,7 @@
 # Local state and data
 .***REMOVED***-state/
 consul/data/
+.s3cfg
 
 # Environment files
 .env

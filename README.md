@@ -1,3 +1,74 @@
+# AINI - AI Infrastructure Management Tool
+
+AINI is a tool for managing AI infrastructure services using Docker and Ansible.
+
+## Quick Start
+
+```bash
+# Clone and setup
+git clone https://github.com/yourusername/***REMOVED***.git
+cd ***REMOVED***
+cp .env.example .env
+# Edit .env with your settings
+
+# Start services
+docker compose up -d
+
+# Check status
+docker compose ps
+```
+
+## Common Operations
+
+### Service Management
+```bash
+# Start all services
+docker compose up -d
+
+# Stop all services
+docker compose down
+
+# View service status
+docker compose ps
+
+# View logs
+docker compose logs -f [service]
+```
+
+### Reset Everything
+```bash
+docker compose down
+rm -rf docker/consul/data && mkdir -p docker/consul/data
+docker compose up -d
+```
+
+### Infrastructure Management
+```bash
+# Initialize infrastructure
+ansible-playbook ansible/playbooks/operations/init_infrastructure.yml
+
+# Reset infrastructure state
+ansible-playbook ansible/playbooks/operations/reset_state.yml
+```
+
+## Architecture
+
+AINI uses:
+- Consul for state management and configuration
+- Docker for service containerization
+- FastAPI for the control API
+
+## Development
+
+To contribute:
+1. Fork the repository
+2. Create a feature branch
+3. Submit a pull request
+
+## License
+
+[Your License]
+
 # AINI (AI Nomad Infrastructure)
 
 AINI is an open-source infrastructure management system designed for AI development teams who need flexible, cost-efficient cloud resources. It enables you to spin up and down both application and GPU servers as needed, maint***REMOVED***ng configurations and data while only paying for actual usage.
@@ -111,19 +182,19 @@ AINI manages two types of servers:
 
 ```bash
 # View status
-docker-compose exec ***REMOVED***-control ***REMOVED*** status
+docker-compose exec control ***REMOVED*** status
 
 # Start servers
-docker-compose exec ***REMOVED***-control ***REMOVED*** start app  # Start application server
-docker-compose exec ***REMOVED***-control ***REMOVED*** start gpu  # Start GPU server
+docker-compose exec control ***REMOVED*** start app  # Start application server
+docker-compose exec control ***REMOVED*** start gpu  # Start GPU server
 
 # Stop servers
-docker-compose exec ***REMOVED***-control ***REMOVED*** stop app
-docker-compose exec ***REMOVED***-control ***REMOVED*** stop gpu
+docker-compose exec control ***REMOVED*** stop app
+docker-compose exec control ***REMOVED*** stop gpu
 
 # Deploy services
-docker-compose exec ***REMOVED***-control ***REMOVED*** deploy nextcloud
-docker-compose exec ***REMOVED***-control ***REMOVED*** deploy ml-stack
+docker-compose exec control ***REMOVED*** deploy nextcloud
+docker-compose exec control ***REMOVED*** deploy ml-stack
 ```
 
 ### Configuration
@@ -132,13 +203,13 @@ All configuration is managed through Consul and persisted in Wasabi:
 
 ```bash
 # Configure cloud provider
-docker-compose exec ***REMOVED***-control ***REMOVED*** configure provider
+docker-compose exec control ***REMOVED*** configure provider
 
 # Configure storage
-docker-compose exec ***REMOVED***-control ***REMOVED*** configure storage
+docker-compose exec control ***REMOVED*** configure storage
 
 # Configure services
-docker-compose exec ***REMOVED***-control ***REMOVED*** configure services
+docker-compose exec control ***REMOVED*** configure services
 ```
 
 ### Monitoring & Dashboards

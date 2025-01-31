@@ -25,15 +25,9 @@ RUN ansible-galaxy install -r /ansible/requirements.yml
 
 WORKDIR /***REMOVED***
 
-# Copy AINI CLI tool and configurations
-COPY cli /***REMOVED***/cli
+# Copy API and configurations
+COPY cli/api.py /***REMOVED***/cli/
+COPY cli/static /***REMOVED***/cli/static
 COPY ansible /***REMOVED***/ansible
 
-# Make CLI executable
-RUN chmod +x /***REMOVED***/cli/***REMOVED***
-
-# Add to PATH
-ENV PATH="/***REMOVED***/cli:${PATH}"
-
-# Start the API server
 CMD ["python", "cli/api.py"]

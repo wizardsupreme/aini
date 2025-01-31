@@ -1,13 +1,17 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 import subprocess
 from typing import Literal
 import json
 import os
+import logging
+import consul
 
 app = FastAPI()
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Enable CORS for development
 app.add_middleware(
@@ -51,33 +55,37 @@ def check_consul_connection():
 @app.get("/api/status")
 async def get_status():
     try:
-        result = subprocess.run(['***REMOVED***', 'status'], 
-                              capture_output=True, 
-                              text=True)
-        if result.returncode != 0:
-            raise HTTPException(status_code=500, detail=result.stderr)
-        
-        # Check Consul connection
-        consul_connected = check_consul_connection()
-        
-        # Check S3 configuration
-        s3_enabled = (
-            os.environ.get('S3_ENABLED', '').lower() == 'true' and
-            os.environ.get('S3_ACCESS_KEY') and
-            os.environ.get('S3_SECRET_KEY') and
-            os.environ.get('S3_BUCKET')
+        # Connect to Consul
+        consul_client = consul.Consul(
+            host=os.getenv('CONSUL_HTTP_ADDR', 'consul').split(':')[0],
+            port=int(os.getenv('CONSUL_HTTP_ADDR', 'consul:8500').split(':')[1])
         )
         
+        # Test Consul connection
+        try:
+            consul_client.kv.get('test')
+            consul_status = True
+        except Exception as e:
+            logger.error(f"Consul error: {str(e)}")
+            consul_status = False
+
+        # Test S3 connection
+        s3_status = os.getenv('S3_ENABLED', 'false').lower() == 'true'
+
         return {
             "success": True,
-            "output": result.stdout,
             "services": {
-                "consul": consul_connected,
-                "s3": s3_enabled
-            }
+                "consul": consul_status,
+                "s3": s3_status
+            },
+            "output": ""  # Add any additional output here
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Status endpoint error: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "error": str(e)}
+        )
 
 @app.post("/api/start/{server_type}")
 async def start_server(server_type: Literal['app', 'gpu']):

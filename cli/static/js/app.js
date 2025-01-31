@@ -105,7 +105,9 @@ const SettingsDialog = ({ isOpen, onClose, settings }) => {
                             {Object.entries(settings.env || {}).map(([key, value]) => (
                                 <div key={key} className="flex justify-between items-center">
                                     <span className="font-mono text-sm dark:text-white">{key}</span>
-                                    <span className="font-mono text-sm dark:text-white">{value}</span>
+                                    <span className="font-mono text-sm dark:text-white">
+                                        {key.includes('TOKEN') || key.includes('KEY') ? '****' : value}
+                                    </span>
                                 </div>
                             ))}
                         </div>
@@ -115,7 +117,9 @@ const SettingsDialog = ({ isOpen, onClose, settings }) => {
                         <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded space-y-2">
                             <div className="flex justify-between dark:text-gray-300">
                                 <span>Consul URL</span>
-                                <span className="text-blue-600 dark:text-blue-400">http://consul:8500</span>
+                                <span className="text-blue-600 dark:text-blue-400">
+                                    {settings.services && settings.services.consul ? settings.services.consul.url : 'Not configured'}
+                                </span>
                             </div>
                             <div className="flex justify-between dark:text-gray-300">
                                 <span>API Port</span>
@@ -220,6 +224,10 @@ const Dashboard = () => {
     const [lastUpdated, setLastUpdated] = useState(null);
     const [settings, setSettings] = useState(null);
     const [showSettings, setShowSettings] = useState(false);
+    const [consulUrl, setConsulUrl] = useState(window.location.hostname === 'localhost' ? 
+        'http://localhost:8500' : 
+        'http://consul:8500'
+    );
 
     const fetchStatus = async (showLoading = false) => {
         try {
@@ -360,7 +368,7 @@ const Dashboard = () => {
                 <h2 className="text-xl font-semibold mb-4 dark:text-white">State Management</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <a 
-                        href="http://consul:8500" 
+                        href={consulUrl}
                         target="_blank" 
                         rel="noopener noreferrer"
                         className="block transition-transform hover:scale-102"

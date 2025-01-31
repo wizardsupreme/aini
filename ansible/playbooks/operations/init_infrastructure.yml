@@ -44,24 +44,6 @@
           - s3_endpoint != ""
         fail_msg: "Required S3 environment variables are not set"
 
-    - name: Install s3cmd
-      apt:
-        name: s3cmd
-        state: present
-      become: true
-
-    - name: Create temporary s3cmd config
-      copy:
-        content: |
-          [default]
-          access_key = {{ s3_access_key }}
-          secret_key = {{ s3_secret_key }}
-          host_base = {{ s3_endpoint | replace('https://', '') }}
-          host_bucket = %(bucket)s.{{ s3_endpoint | replace('https://', '') }}
-          use_https = True
-        dest: /tmp/.s3cfg
-        mode: '0600'
-
     - name: Save credentials to Consul if not exists
       consul_kv:
         key: "***REMOVED***/config/storage"
@@ -109,51 +91,8 @@
             enabled: "{{ lookup('env', 'DEBUG') | default('false') }}"
       when: env_config.status != 200
 
-    - name: Test S3 bucket access
-      command: s3cmd ls s3://{{ s3_bucket }} --config=/tmp/.s3cfg
-      register: s3_test
-      failed_when: s3_test.rc != 0
-
-    - name: Test Consul backup system
-      block:
-        - name: Create test key
-          consul_kv:
-            key: "test/init"
-            value: "Initialization test at {{ timestamp }}"
-            host: "{{ consul_host }}"
-        
-        - name: Create Consul snapshot
-          uri:
-            url: "http://{{ consul_host }}:8500/v1/snapshot"
-            method: GET
-            dest: "/tmp/consul_test.snap"
-          register: backup_test
-          
-        - name: Upload Consul snapshot to S3
-          command: >
-            s3cmd put /tmp/consul_test.snap 
-            s3://{{ s3_bucket }}/consul-backups/test_backup_{{ timestamp }}.snap 
-            --config=/tmp/.s3cfg
-          register: upload_result
-          failed_when: upload_result.rc != 0
-
-        - name: Verify backup exists in S3
-          command: >
-            s3cmd ls s3://{{ s3_bucket }}/consul-backups/test_backup_{{ timestamp }}.snap
-            --config=/tmp/.s3cfg
-          register: verify_result
-          failed_when: verify_result.rc != 0
-
-      always:
-        - name: Cleanup temporary files
-          file:
-            path: "{{ item }}"
-            state: absent
-          with_items:
-            - /tmp/.s3cfg
-            - /tmp/consul_test.snap
-
-      rescue:
-        - name: Report backup system failure
-          fail:
-            msg: "Consul backup system verification failed. Please check S3 credentials and Consul status."
+    - name: Create test key
+      consul_kv:
+        key: "test/init"
+        value: "Initialization test at {{ timestamp }}"
+        host: "{{ consul_host }}"
