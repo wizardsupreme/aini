@@ -32,7 +32,9 @@ The color scheme was chosen to reflect both professionalism and innovation, with
 
 ## Quick Start
 
-The fastest way to get started with AINI is using Docker:
+AINI can be run either via Docker (recommended) or directly on your system.
+
+### Option 1: Using Docker (Recommended)
 
 ```bash
 # Clone the repository
@@ -50,11 +52,38 @@ cp .env.example .env
 # - S3_BUCKET (if S3_ENABLED=true)
 # - S3_ENDPOINT (if S3_ENABLED=true)
 
-# Start AINI
-docker-compose up -d
+# Start the infrastructure
+docker compose up -d
+
+# Initialize the infrastructure
+docker compose exec control ansible-playbook ansible/playbooks/operations/init_infrastructure.yml -v
 
 # Use AINI CLI
-docker-compose exec ***REMOVED***-control ***REMOVED*** --help
+docker compose exec control ***REMOVED*** --help
+```
+
+### Option 2: Local Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/***REMOVED***.git
+cd ***REMOVED***
+
+# Create and configure your environment
+cp .env.example .env
+# Edit .env with your credentials
+
+# Install Ansible requirements
+ansible-galaxy collection install -r ansible/requirements.yml
+
+# Load environment variables
+set -a; source .env; set +a
+
+# Initialize the infrastructure
+ansible-playbook ansible/playbooks/operations/init_infrastructure.yml -v
+
+# Use AINI CLI directly
+./cli/***REMOVED*** --help
 ```
 
 ## Infrastructure Components
@@ -206,12 +235,12 @@ Commands:
 
 ### Running Tests
 ```bash
-docker-compose exec ***REMOVED***-control ***REMOVED*** test
+docker-compose exec control ***REMOVED*** test
 ```
 
 ### Building Documentation
 ```bash
-docker-compose exec ***REMOVED***-control ***REMOVED*** docs build
+docker-compose exec control ***REMOVED*** docs build
 ```
 
 ### Local Development Setup
