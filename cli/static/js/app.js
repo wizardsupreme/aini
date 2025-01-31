@@ -1,4 +1,4 @@
-const { useState, useEffect } = React;
+const { useState, useEffect, StrictMode } = React;
 
 // Create icon components manually since we can't use Lucide React directly
 const ServerIcon = ({ className }) => (
@@ -85,38 +85,6 @@ const EyeOffIcon = ({ className }) => (
 const SettingsDialog = ({ isOpen, onClose, settings }) => {
     if (!isOpen || !settings) return null;
     
-    const [visibleSecrets, setVisibleSecrets] = useState({});
-
-    const toggleSecret = (key) => {
-        setVisibleSecrets(prev => ({
-            ...prev,
-            [key]: !prev[key]
-        }));
-    };
-
-    const renderValue = (key, value) => {
-        const isSecret = key.includes('KEY') || key.includes('TOKEN');
-        if (!isSecret) return value;
-
-        return (
-            <div className="flex items-center gap-2">
-                <span className="font-mono text-sm">
-                    {visibleSecrets[key] ? value : '••••••••'}
-                </span>
-                <button
-                    type="button"
-                    onClick={() => toggleSecret(key)}
-                    className="text-gray-400 hover:text-gray-600"
-                >
-                    {visibleSecrets[key] ? 
-                        <EyeOffIcon className="h-4 w-4" /> : 
-                        <EyeIcon className="h-4 w-4" />
-                    }
-                </button>
-            </div>
-        );
-    };
-
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
@@ -136,8 +104,8 @@ const SettingsDialog = ({ isOpen, onClose, settings }) => {
                         <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded space-y-2">
                             {Object.entries(settings.env || {}).map(([key, value]) => (
                                 <div key={key} className="flex justify-between items-center">
-                                    <span className="font-mono text-sm">{key}</span>
-                                    {renderValue(key, value)}
+                                    <span className="font-mono text-sm dark:text-white">{key}</span>
+                                    <span className="font-mono text-sm dark:text-white">{value}</span>
                                 </div>
                             ))}
                         </div>
@@ -451,10 +419,12 @@ const Dashboard = () => {
     );
 };
 
-// Update the root render to include ThemeProvider
+// Update the root render to use StrictMode and fix the development warnings
 ReactDOM.render(
-    <ThemeProvider>
-        <Dashboard />
-    </ThemeProvider>,
+    <StrictMode>
+        <ThemeProvider>
+            <Dashboard />
+        </ThemeProvider>
+    </StrictMode>,
     document.getElementById('root')
 ); 
