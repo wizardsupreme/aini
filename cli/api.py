@@ -37,12 +37,12 @@ async def service_worker():
 
 def check_consul_connection():
     try:
-        # Try to connect to Consul's API directly
+        # Use consul:8500 instead of localhost:8500
         consul_result = subprocess.run(
-            ['curl', '-s', '-f', 'http://localhost:8500/v1/status/leader'],
+            ['curl', '-s', '-f', 'http://consul:8500/v1/status/leader'],
             capture_output=True,
             text=True,
-            timeout=2  # Add timeout to prevent hanging
+            timeout=2
         )
         return consul_result.returncode == 0 and consul_result.stdout.strip()
     except Exception:
@@ -135,7 +135,7 @@ async def get_settings():
                 "services": {
                     "consul": {
                         "connected": consul_connected,
-                        "url": "http://localhost:8500"
+                        "url": "http://consul:8500"
                     }
                 }
             }

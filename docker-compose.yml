@@ -3,20 +3,20 @@ version: '3.8'
 services:
   consul:
     image: hashicorp/consul:latest
-    container_name: ***REMOVED***-consul
+    container_name: consul
     volumes:
       - consul_data:/consul/data
     networks:
-      - ***REMOVED***-net
+      - ***REMOVED***
     ports:
       - "8500:8500"
       - "8600:8600/udp"
     command: agent -server -bootstrap -ui -client=0.0.0.0
 
-  ***REMOVED***-control:
+  control:
     build:
       context: .
-    container_name: ***REMOVED***-control
+    container_name: control
     volumes:
       - .:/***REMOVED***
       - /var/run/docker.sock:/var/run/docker.sock
@@ -34,14 +34,14 @@ services:
       - S3_REGION=${S3_REGION:-us-east-1}
       - DEBUG=${DEBUG:-false}
     networks:
-      - ***REMOVED***-net
+      - ***REMOVED***
     depends_on:
       - consul
     command: python cli/api.py
 
 networks:
-  ***REMOVED***-net:
-    name: ***REMOVED***-net
+  ***REMOVED***:
+    name: ***REMOVED***
 
 volumes:
   consul_data:

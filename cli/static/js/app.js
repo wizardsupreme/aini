@@ -38,15 +38,15 @@ const SpinnerIcon = ({ className }) => (
 );
 
 const Alert = ({ children, className = "" }) => (
-  <div className={`p-4 rounded-lg border ${className}`}>
-    <div className="flex items-center gap-2">
-      {children}
+    <div className={`p-4 rounded-lg border dark:border-gray-700 ${className}`}>
+        <div className="flex items-center gap-2 text-gray-800 dark:text-gray-100">
+            {children}
+        </div>
     </div>
-  </div>
 );
 
 const AlertDescription = ({ children }) => (
-  <div className="text-sm">{children}</div>
+    <div className="text-sm text-gray-800 dark:text-gray-100">{children}</div>
 );
 
 // Add a Notification component
@@ -119,21 +119,21 @@ const SettingsDialog = ({ isOpen, onClose, settings }) => {
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
                 <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-semibold">Settings</h2>
+                    <h2 className="text-xl font-semibold dark:text-white">Settings</h2>
                     <button 
                         type="button"
                         onClick={onClose}
-                        className="text-gray-500 hover:text-gray-700"
+                        className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
                     >
                         ×
                     </button>
                 </div>
                 <div className="space-y-4">
                     <div>
-                        <h3 className="font-medium mb-2">Environment Variables</h3>
-                        <div className="bg-gray-50 p-4 rounded space-y-2">
+                        <h3 className="font-medium mb-2 dark:text-white">Environment Variables</h3>
+                        <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded space-y-2">
                             {Object.entries(settings.env || {}).map(([key, value]) => (
                                 <div key={key} className="flex justify-between items-center">
                                     <span className="font-mono text-sm">{key}</span>
@@ -143,13 +143,13 @@ const SettingsDialog = ({ isOpen, onClose, settings }) => {
                         </div>
                     </div>
                     <div>
-                        <h3 className="font-medium mb-2">Service Configuration</h3>
-                        <div className="bg-gray-50 p-4 rounded space-y-2">
-                            <div className="flex justify-between">
+                        <h3 className="font-medium mb-2 dark:text-white">Service Configuration</h3>
+                        <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded space-y-2">
+                            <div className="flex justify-between dark:text-gray-300">
                                 <span>Consul URL</span>
-                                <span className="text-blue-600">http://localhost:8500</span>
+                                <span className="text-blue-600 dark:text-blue-400">http://consul:8500</span>
                             </div>
-                            <div className="flex justify-between">
+                            <div className="flex justify-between dark:text-gray-300">
                                 <span>API Port</span>
                                 <span>3000</span>
                             </div>
@@ -158,6 +158,73 @@ const SettingsDialog = ({ isOpen, onClose, settings }) => {
                 </div>
             </div>
         </div>
+    );
+};
+
+// Add ThemeContext at the top of the file
+const ThemeContext = React.createContext({
+    theme: 'light',
+    toggleTheme: () => {}
+});
+
+// Add ThemeProvider component
+const ThemeProvider = ({ children }) => {
+    const [theme, setTheme] = useState('light');
+
+    const toggleTheme = () => {
+        const newTheme = theme === 'light' ? 'dark' : 'light';
+        setTheme(newTheme);
+        document.documentElement.classList.toggle('dark');
+    };
+
+    useEffect(() => {
+        // Check system preference
+        if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            setTheme('dark');
+            document.documentElement.classList.add('dark');
+        }
+    }, []);
+
+    return (
+        <ThemeContext.Provider value={{ theme, toggleTheme }}>
+            {children}
+        </ThemeContext.Provider>
+    );
+};
+
+// Update the ThemeToggle component with monochrome icons
+const ThemeToggle = () => {
+    const { theme, toggleTheme } = React.useContext(ThemeContext);
+    
+    return (
+        <button
+            type="button"
+            onClick={toggleTheme}
+            className="relative inline-flex items-center justify-center w-10 h-10 rounded-lg bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors"
+            aria-label="Toggle theme"
+        >
+            {/* Sun icon */}
+            <span className={`absolute transition-opacity ${theme === 'dark' ? 'opacity-0' : 'opacity-100'}`}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-600">
+                    <circle cx="12" cy="12" r="5" />
+                    <line x1="12" y1="1" x2="12" y2="3" />
+                    <line x1="12" y1="21" x2="12" y2="23" />
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                    <line x1="1" y1="12" x2="3" y2="12" />
+                    <line x1="21" y1="12" x2="23" y2="12" />
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                </svg>
+            </span>
+            
+            {/* Moon icon */}
+            <span className={`absolute transition-opacity ${theme === 'light' ? 'opacity-0' : 'opacity-100'}`}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                </svg>
+            </span>
+        </button>
     );
 };
 
@@ -250,20 +317,22 @@ const Dashboard = () => {
     }, []);
 
     const ServerCard = ({ type, server }) => (
-        <div className="p-6 bg-white rounded-lg shadow">
+        <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
             <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                    <ServerIcon className={server.status === 'running' ? 'text-green-500' : 'text-gray-400'} />
+                    <ServerIcon className={server.status === 'running' ? 'text-green-500' : 'text-gray-400 dark:text-gray-500'} />
                     <div>
-                        <h3 className="font-medium">{type.toUpperCase()} Server</h3>
-                        <p className="text-sm text-gray-500">{server.ip || 'Not running'}</p>
+                        <h3 className="font-medium dark:text-white">{type.toUpperCase()} Server</h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{server.ip || 'Not running'}</p>
                     </div>
                 </div>
                 <button 
                     type="button"
                     onClick={() => handleServerAction(type, server.status === 'running' ? 'stop' : 'start')}
                     className={`p-2 rounded ${
-                        server.status === 'running' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'
+                        server.status === 'running' 
+                            ? 'bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-400' 
+                            : 'bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400'
                     }`}
                     disabled={loading}
                 >
@@ -278,20 +347,21 @@ const Dashboard = () => {
     };
 
     return (
-        <div className="p-8">
+        <div className="p-8 bg-gray-50 dark:bg-gray-900 min-h-screen">
             <Notification error={error} loading={loading} />
             <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold">AINI Dashboard</h1>
+                <h1 className="text-2xl font-bold dark:text-white">AINI Dashboard</h1>
                 <div className="flex items-center gap-4">
+                    <ThemeToggle />
                     {lastUpdated && (
-                        <span className="text-sm text-gray-500">
+                        <span className="text-sm text-gray-500 dark:text-gray-400">
                             Last updated: {lastUpdated}
                         </span>
                     )}
                     <button 
                         type="button"
                         onClick={() => fetchStatus(true)}
-                        className="px-3 py-1 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 flex items-center gap-2"
+                        className="px-3 py-1 bg-blue-50 dark:bg-blue-900 text-blue-600 dark:text-blue-300 rounded hover:bg-blue-100 dark:hover:bg-blue-800 flex items-center gap-2"
                         disabled={loading}
                     >
                         {loading && <SpinnerIcon className="h-4 w-4" />}
@@ -306,23 +376,31 @@ const Dashboard = () => {
             </div>
 
             <div className="space-y-4">
-                <h2 className="text-xl font-semibold mb-4">State Management</h2>
+                <h2 className="text-xl font-semibold mb-4 dark:text-white">State Management</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <a 
-                        href="http://localhost:8500" 
+                        href="http://consul:8500" 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="block"
+                        className="block transition-transform hover:scale-102"
                     >
-                        <Alert className={`${stateStatus.consul ? 'bg-green-50' : 'bg-red-50'} hover:opacity-80 transition-opacity`}>
-                            <DatabaseIcon className="h-4 w-4" />
+                        <Alert className={`${
+                            stateStatus.consul 
+                                ? 'bg-green-50 dark:bg-green-950 hover:bg-green-100 dark:hover:bg-green-900' 
+                                : 'bg-red-50 dark:bg-red-950 hover:bg-red-100 dark:hover:bg-red-900'
+                            } transition-colors`}>
+                            <DatabaseIcon className="h-4 w-4 text-gray-800 dark:text-gray-100" />
                             <AlertDescription>
                                 Consul: {stateStatus.consul ? 'Connected' : 'Disconnected'}
                             </AlertDescription>
                         </Alert>
                     </a>
-                    <Alert className={stateStatus.s3 ? 'bg-green-50' : 'bg-gray-50'}>
-                        <CloudIcon className="h-4 w-4" />
+                    <Alert className={`${
+                        stateStatus.s3 
+                            ? 'bg-green-50 dark:bg-green-950 hover:bg-green-100 dark:hover:bg-green-900' 
+                            : 'bg-gray-50 dark:bg-gray-950 hover:bg-gray-100 dark:hover:bg-gray-900'
+                        } transition-colors`}>
+                        <CloudIcon className="h-4 w-4 text-gray-800 dark:text-gray-100" />
                         <AlertDescription>
                             S3 Storage: {stateStatus.s3 ? 'Connected' : 'Not Configured'}
                         </AlertDescription>
@@ -333,18 +411,18 @@ const Dashboard = () => {
             <div className="mt-8">
                 <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <button type="button" className="p-4 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100">
+                    <button type="button" className="p-4 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50">
                         View Logs
                     </button>
-                    <button type="button" className="p-4 bg-green-50 text-green-600 rounded-lg hover:bg-green-100">
+                    <button type="button" className="p-4 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-300 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/50">
                         Check Config
                     </button>
-                    <button type="button" className="p-4 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100">
+                    <button type="button" className="p-4 bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-300 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/50">
                         View State
                     </button>
                     <button 
                         type="button" 
-                        className="p-4 bg-orange-50 text-orange-600 rounded-lg hover:bg-orange-100"
+                        className="p-4 bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-300 rounded-lg hover:bg-orange-100 dark:hover:bg-orange-900/50"
                         onClick={handleSettingsClick}
                     >
                         Settings
@@ -360,4 +438,10 @@ const Dashboard = () => {
     );
 };
 
-ReactDOM.render(<Dashboard />, document.getElementById('root')); 
+// Update the root render to include ThemeProvider
+ReactDOM.render(
+    <ThemeProvider>
+        <Dashboard />
+    </ThemeProvider>,
+    document.getElementById('root')
+); 
