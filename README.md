@@ -47,8 +47,6 @@ docker compose up -d
 # Initialize infrastructure
 ansible-playbook ansible/playbooks/operations/init_infrastructure.yml
 
-# Reset infrastructure state
-ansible-playbook ansible/playbooks/operations/reset_state.yml
 ```
 
 ## Architecture

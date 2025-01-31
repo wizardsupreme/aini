@@ -9,8 +9,17 @@
     server_type: "{{ lookup('env', 'APP_SERVER_TYPE') if target == 'app' else lookup('env', 'GPU_SERVER_TYPE') }}"
     image: "ubuntu-22.04"
     location: "fsn1"
+    ssh_keys: ["{{ lookup('env', 'HETZNER_SSH_KEY_NAME') }}"]
 
   tasks:
+    - name: Debug variables
+      debug:
+        msg: 
+          - "Server name: {{ server_name }}"
+          - "Server type: {{ server_type }}"
+          - "Token exists: {{ hcloud_token != '' }}"
+          - "SSH key name: {{ ssh_keys[0] }}"
+
     - name: Create Hetzner server
       hetzner.hcloud.hcloud_server:
         api_token: "{{ hcloud_token }}"
@@ -18,6 +27,7 @@
         server_type: "{{ server_type }}"
         image: "{{ image }}"
         location: "{{ location }}"
+        ssh_keys: "{{ ssh_keys }}"
         state: present
       register: server
 
@@ -27,14 +37,19 @@
         port: 22
         timeout: 300
 
-    - name: Add server to inventory
+    - name: Add server to runtime inventory
       add_host:
         name: "{{ server.hcloud_server.ipv4_address }}"
         groups: 
           - new_servers
           - "{{ target }}_servers"
 
-    # If this is an app server, configure it
+    - name: Save server to inventory file
+      lineinfile:
+        path: "{{ playbook_dir }}/../inventory/{{ target }}_servers.ini"
+        line: "{{ server.hcloud_server.ipv4_address }} server_name={{ server_name }}"
+        create: yes
+
     - name: Configure app server
-      include_playbook: ../deploy_app_server.yml
+      include_tasks: ../deploy_app_server.yml
       when: target == "app"

@@ -4,6 +4,8 @@ server = true
 bootstrap = true
 ui = true
 client_addr = "0.0.0.0"
+log_level = "DEBUG"
+enable_debug = true
 
 # Stability settings
 performance {
@@ -13,14 +15,18 @@ performance {
 # Ensure we're in non-dev mode
 leave_on_terminate = false
 skip_leave_on_interrupt = true
-log_level = "DEBUG"  # Add this at the top
 
-enable_debug = true
 # Backup configuration
 snapshot_agent {
   enabled = true
+  log_level = "DEBUG"
+  
+  # Run as a daemon
+  daemon = true
+  daemon_json = "/consul/config/snapshot.json"
+  
   snapshot {
-    interval    = "15m"  # More frequent backups
+    interval    = "1m"
     retain      = 30
     deregister_after = "8h"
   }
