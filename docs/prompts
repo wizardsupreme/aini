@@ -1,0 +1,31 @@
+so this is the code i have so far.
+
+attached is also the file structure.
+
+i want to build an automated stack that will configure a hetzner applications server with the following:
+
+traefik - for domain and ssl
+
+n8n - for ai agent workflows
+
+consul+vault - for secrets and api keys and configs
+
+librechat - for ai frontend
+
+netdata - for monitoring
+
+watchtower - for updates
+
+nextcloud - for a local cloud - backend will either be hetzner s3 or ebs-like hetzner volumes.
+
+onlyoffice - for a free office
+
+we want everything to run from docker compose files, traefik would have the configs done via dynamic configs. we will pick each project from their respective github repos.
+
+can you help me build the next steps.
+
+the existing ansible playbooks are already able to spin up the hetzner server without issues, it also prepopulates the inventory file. so now we need to get started configuring the server.
+
+please give it in smaller steps and put the files on the right along with the name and location so i can copy them easily into my repo.
+
+also give me an updated readme file, i think the one i have here is quite messy and has more information then we need.

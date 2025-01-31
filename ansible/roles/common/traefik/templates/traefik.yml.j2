@@ -1,0 +1,119 @@
+# ansible/roles/common/traefik/templates/traefik.yml.j2
+global:
+  checkNewVersion: true
+  sendAnonymousUsage: false
+
+api:
+  dashboard: true
+  debug: {{ traefik_debug | lower }}
+
+entryPoints:
+  web:
+    address: ":80"
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+
+  websecure:
+    address: ":443"
+
+log:
+  level: INFO
+
+accessLog: {}
+
+providers:
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    watch: true
+    exposedByDefault: false
+    network: traefik-public
+  file:
+    directory: /etc/traefik/dynamic
+    watch: true
+
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      email: {{ acme_email }}
+      storage: /etc/traefik/certs/acme.json
+      httpChallenge:
+        entryPoint: web
+
+# ansible/roles/common/traefik/templates/dynamic/middlewares.yml.j2
+http:
+  middlewares:
+    security-headers:
+      headers:
+        frameDeny: true
+        sslRedirect: true
+        browserXssFilter: true
+        contentTypeNosniff: true
+        forceSTSHeader: true
+        stsIncludeSubdomains: true
+        stsPreload: true
+        stsSeconds: 31536000
+        customFrameOptionsValue: "SAMEORIGIN"
+        customResponseHeaders:
+          X-Robots-Tag: "none,noarchive,nosnippet,notranslate,noimageindex"
+          server: ""
+
+    secured:
+      chain:
+        middlewares:
+          - security-headers
+
+    compress:
+      compress: {}
+
+# ansible/roles/common/traefik/templates/dynamic/tls.yml.j2
+tls:
+  options:
+    default:
+      minVersion: VersionTLS12
+      sniStrict: true
+      cipherSuites:
+        - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+        - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+        - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+        - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305
+        - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
+
+# ansible/roles/common/traefik/templates/docker-compose.yml.j2
+version: '3.8'
+
+services:
+  traefik:
+    image: traefik:{{ traefik_version }}
+    container_name: traefik
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - traefik-public
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - TZ={{ timezone }}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /opt/***REMOVED***/traefik/config/traefik.yml:/etc/traefik/traefik.yml:ro
+      - /opt/***REMOVED***/traefik/config/dynamic:/etc/traefik/dynamic:ro
+      - /opt/***REMOVED***/traefik/certs:/etc/traefik/certs:rw
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.entrypoints=websecure"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.{{ domain }}`)"
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.routers.traefik.middlewares=secured@file"
+      - "traefik.http.routers.traefik.tls.certresolver=letsencrypt"
+      - "traefik.http.middlewares.traefik-auth.basicauth.users={{ traefik_username }}:{{ traefik_password_hash }}"
+
+networks:
+  traefik-public:
+    external: true

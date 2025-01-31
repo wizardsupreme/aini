@@ -1,0 +1,24 @@
+
+# ansible/roles/hetzner/storage/tasks/delete.yml
+---
+- name: Verify required variables
+  assert:
+    that:
+      - hcloud_token != ""
+      - bucket_name != ""
+    fail_msg: "Missing required variables. Ensure HCLOUD_TOKEN and S3_BUCKET are set"
+
+- name: Delete S3 bucket
+  uri:
+    url: "https://api.hetzner.cloud/v1/object_storages/{{ bucket_name }}"
+    method: DELETE
+    headers:
+      Authorization: "Bearer {{ hcloud_token }}"
+    status_code: [200, 201, 404]
+  register: delete_result
+
+- name: Remove credentials file if exists
+  file:
+    path: "{{ credentials_file }}"
+    state: absent
+  when: delete_result.status != 404

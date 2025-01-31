@@ -1,0 +1,14 @@
+# ansible/roles/hetzner/ssh_key/tasks/create.yml
+---
+- name: Read SSH public key
+  slurp:
+    src: "{{ ssh_public_key_file | expanduser }}"
+  register: ssh_pub_key
+
+- name: Create SSH key in Hetzner
+  hetzner.hcloud.hcloud_ssh_key:
+    api_token: "{{ HCLOUD_TOKEN }}"
+    name: "{{ ssh_key_name }}"
+    public_key: "{{ ssh_pub_key['content'] | b64decode }}"
+    state: present
+  register: ssh_key

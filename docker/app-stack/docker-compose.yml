@@ -1,0 +1,226 @@
+version: '3.8'
+
+networks:
+  traefik-public:
+    external: false
+  internal:
+    external: false
+
+volumes:
+  nextcloud_data:
+  consul_data:
+  vault_data:
+  n8n_data:
+  librechat_data:
+  onlyoffice_data:
+
+services:
+  traefik:
+    image: traefik:v2.10
+    container_name: traefik
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - traefik-public
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik/dynamic:/config
+      - ./traefik/acme.json:/acme.json
+    command:
+      - --api.dashboard=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --providers.file.directory=/config
+      - --providers.file.watch=true
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      - --certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL}
+      - --certificatesresolvers.letsencrypt.acme.storage=/acme.json
+      - --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.entrypoints=websecure"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.${DOMAIN}`)"
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.routers.traefik.middlewares=auth"
+      - "traefik.http.middlewares.auth.basicauth.users=${TRAEFIK_USER}:${TRAEFIK_PASSWORD}"
+
+  consul:
+    image: hashicorp/consul:1.15
+    container_name: consul
+    restart: unless-stopped
+    networks:
+      - internal
+      - traefik-public
+    volumes:
+      - consul_data:/consul/data
+    environment:
+      - CONSUL_BIND_INTERFACE=eth0
+      - CONSUL_HTTP_ADDR=0.0.0.0
+    command: agent -server -bootstrap-expect=1 -ui -client=0.0.0.0
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.consul.rule=Host(`consul.${DOMAIN}`)"
+      - "traefik.http.routers.consul.entrypoints=websecure"
+      - "traefik.http.services.consul.loadbalancer.server.port=8500"
+
+  vault:
+    image: hashicorp/vault:1.13
+    container_name: vault
+    restart: unless-stopped
+    networks:
+      - internal
+      - traefik-public
+    volumes:
+      - vault_data:/vault/data
+    cap_add:
+      - IPC_LOCK
+    environment:
+      - VAULT_ADDR=http://0.0.0.0:8200
+      - VAULT_API_ADDR=http://0.0.0.0:8200
+    command: server -config=/vault/config/config.hcl
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.vault.rule=Host(`vault.${DOMAIN}`)"
+      - "traefik.http.routers.vault.entrypoints=websecure"
+      - "traefik.http.services.vault.loadbalancer.server.port=8200"
+
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n
+    restart: unless-stopped
+    networks:
+      - internal
+      - traefik-public
+    volumes:
+      - n8n_data:/home/node/.n8n
+    environment:
+      - N8N_HOST=${DOMAIN}
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=https
+      - WEBHOOK_URL=https://n8n.${DOMAIN}
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=${N8N_USER}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_PASSWORD}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.n8n.rule=Host(`n8n.${DOMAIN}`)"
+      - "traefik.http.routers.n8n.entrypoints=websecure"
+      - "traefik.http.services.n8n.loadbalancer.server.port=5678"
+
+  librechat:
+    image: ghcr.io/danny-avila/librechat:latest
+    container_name: librechat
+    restart: unless-stopped
+    networks:
+      - internal
+      - traefik-public
+    volumes:
+      - librechat_data:/app/api/data
+    environment:
+      - HOST=0.0.0.0
+      - PORT=3080
+      - MONGO_URI=mongodb://mongo:27017/librechat
+      - DOMAIN_CLIENT=https://chat.${DOMAIN}
+      - DOMAIN_SERVER=https://chat.${DOMAIN}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.librechat.rule=Host(`chat.${DOMAIN}`)"
+      - "traefik.http.routers.librechat.entrypoints=websecure"
+      - "traefik.http.services.librechat.loadbalancer.server.port=3080"
+
+  mongo:
+    image: mongo:latest
+    container_name: mongo
+    restart: unless-stopped
+    networks:
+      - internal
+    volumes:
+      - ./mongo/data:/data/db
+
+  netdata:
+    image: netdata/netdata:latest
+    container_name: netdata
+    restart: unless-stopped
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - apparmor:unconfined
+    networks:
+      - traefik-public
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.netdata.rule=Host(`netdata.${DOMAIN}`)"
+      - "traefik.http.routers.netdata.entrypoints=websecure"
+      - "traefik.http.services.netdata.loadbalancer.server.port=19999"
+
+  watchtower:
+    image: containrrr/watchtower:latest
+    container_name: watchtower
+    restart: unless-stopped
+    networks:
+      - internal
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --interval 30 --cleanup
+
+  nextcloud:
+    image: nextcloud:latest
+    container_name: nextcloud
+    restart: unless-stopped
+    networks:
+      - internal
+      - traefik-public
+    volumes:
+      - nextcloud_data:/var/www/html
+    environment:
+      - MYSQL_HOST=nextcloud-db
+      - MYSQL_DATABASE=nextcloud
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - NEXTCLOUD_ADMIN_USER=${NEXTCLOUD_ADMIN}
+      - NEXTCLOUD_ADMIN_PASSWORD=${NEXTCLOUD_PASSWORD}
+      - NEXTCLOUD_TRUSTED_DOMAINS=cloud.${DOMAIN}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.nextcloud.rule=Host(`cloud.${DOMAIN}`)"
+      - "traefik.http.routers.nextcloud.entrypoints=websecure"
+      - "traefik.http.services.nextcloud.loadbalancer.server.port=80"
+
+  nextcloud-db:
+    image: mariadb:10.6
+    container_name: nextcloud-db
+    restart: unless-stopped
+    networks:
+      - internal
+    volumes:
+      - ./nextcloud/db:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=nextcloud
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+
+  onlyoffice:
+    image: onlyoffice/documentserver:latest
+    container_name: onlyoffice
+    restart: unless-stopped
+    networks:
+      - internal
+      - traefik-public
+    volumes:
+      - onlyoffice_data:/var/www/onlyoffice/Data
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.onlyoffice.rule=Host(`office.${DOMAIN}`)"
+      - "traefik.http.routers.onlyoffice.entrypoints=websecure"
+      - "traefik.http.services.onlyoffice.loadbalancer.server.port=80"

@@ -1,0 +1,5 @@
+# group_vars/all.yml
+consul_encrypt_key: "{{ vault_consul_encrypt_key }}"  # Generate with consul keygen
+consul_acl_tokens:
+  master: "{{ vault_consul_master_token }}"
+  agent: "{{ vault_consul_agent_token }}"

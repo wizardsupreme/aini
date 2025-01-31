@@ -1,0 +1,7 @@
+# ansible/roles/hetzner/ssh_key/tasks/delete.yml
+---
+- name: Delete SSH key from Hetzner
+  hetzner.hcloud.hcloud_ssh_key:
+    api_token: "{{ HCLOUD_TOKEN }}"
+    name: "{{ ssh_key_name }}"
+    state: absent

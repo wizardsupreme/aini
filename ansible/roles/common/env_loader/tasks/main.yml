@@ -1,0 +1,10 @@
+# ansible/roles/common/env_loader/tasks/main.yml
+---
+- name: Load environment variables from .env file
+  set_fact:
+    env_vars: "{{ lookup('ansible.builtin.ini', '', file=env_file) }}"
+
+- name: Set environment variables as facts
+  set_fact:
+    "{{ item.key }}": "{{ lookup('ansible.builtin.env', item.key) | default(item.value) }}"
+  loop: "{{ env_vars | dict2items }}"

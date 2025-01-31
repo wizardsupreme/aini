@@ -1,0 +1,58 @@
+# ansible/roles/common/traefik/tasks/main.yml
+---
+- name: Create Traefik directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - /opt/***REMOVED***/traefik
+    - /opt/***REMOVED***/traefik/config
+    - /opt/***REMOVED***/traefik/config/dynamic
+    - /opt/***REMOVED***/traefik/certs
+
+- name: Template docker-compose.yml
+  template:
+    src: docker-compose.yml.j2
+    dest: /opt/***REMOVED***/traefik/docker-compose.yml
+    mode: '0644'
+
+- name: Template Traefik configuration
+  template:
+    src: "{{ item.src }}"
+    dest: "/opt/***REMOVED***/traefik/config/{{ item.dest }}"
+    mode: '0644'
+  loop:
+    - { src: traefik.yml.j2, dest: traefik.yml }
+    - { src: dynamic/middlewares.yml.j2, dest: dynamic/middlewares.yml }
+    - { src: dynamic/tls.yml.j2, dest: dynamic/tls.yml }
+
+- name: Create acme.json
+  file:
+    path: /opt/***REMOVED***/traefik/certs/acme.json
+    state: touch
+    mode: '0600'
+
+- name: Create Traefik network
+  community.docker.docker_network:
+    name: traefik-public
+    driver: bridge
+
+- name: Start Traefik
+  community.docker.docker_compose:
+    project_src: /opt/***REMOVED***/traefik
+    state: present
+    pull: yes
+
+# ansible/roles/common/traefik/defaults/main.yml
+---
+traefik_version: "v2.10"
+traefik_debug: false
+timezone: "UTC"
+domain: "{{ lookup('env', 'DOMAIN') }}"
+acme_email: "{{ lookup('env', 'ACME_EMAIL') }}"
+traefik_username: "{{ lookup('env', 'TRAEFIK_USER') }}"
+traefik_password_hash: "{{ lookup('env', 'TRAEFIK_PASSWORD') | password_hash('bcrypt') }}"
+
+# ansible/roles/common/traefik/templates/docker-compose.yml.j2
+# Same content as before...

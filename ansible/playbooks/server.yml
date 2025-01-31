@@ -1,0 +1,14 @@
+
+# ansible/playbooks/server.yml
+---
+- name: Manage Hetzner Server
+  hosts: localhost
+  gather_facts: false
+  vars:
+    env_file: "{{ playbook_dir }}/../.env"
+    target: "{{ target | default('app') }}"
+    server_action: "{{ action | default('create') }}"
+
+  roles:
+    - role: common/env_loader
+    - role: hetzner/server

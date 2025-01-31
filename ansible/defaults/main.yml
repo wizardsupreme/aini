@@ -1,0 +1,15 @@
+---
+# Project-wide defaults
+project_name: "***REMOVED***"
+data_dir: "/opt/{{ project_name }}"
+default_location: "fsn1"
+default_image: "ubuntu-22.04"
+
+# Storage defaults
+storage_location: "eu-central"
+credentials_file: ".env.s3"
+
+# Server type mappings
+server_types:
+  app: "{{ APP_SERVER_TYPE }}"
+  gpu: "{{ GPU_SERVER_TYPE }}"

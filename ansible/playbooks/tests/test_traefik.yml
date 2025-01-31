@@ -1,0 +1,6 @@
+# ansible/playbooks/test/test_traefik.yml
+---
+- hosts: app_servers
+  become: true
+  roles:
+    - common/traefik

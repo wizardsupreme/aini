@@ -1,0 +1,5 @@
+# ansible/roles/hetzner/storage/defaults/main.yml
+---
+location: "{{ storage_location }}"
+bucket_name: "{{ S3_BUCKET }}"
+credentials_file: "{{ credentials_file }}"

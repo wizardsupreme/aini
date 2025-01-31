@@ -1,0 +1,7 @@
+# ansible/roles/hetzner/server/defaults/main.yml
+---
+server_type: "{{ server_types[target] }}"
+server_name: "{{ project_name }}-{{ target }}"
+image: "{{ default_image }}"
+location: "{{ default_location }}"
+ssh_key_name: "{{ project_name }}-key"

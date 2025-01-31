@@ -1,0 +1,10 @@
+
+# ansible/roles/hetzner/storage/tasks/main.yml
+---
+- name: Include create tasks
+  include_tasks: create.yml
+  when: storage_action | default('create') == 'create'
+
+- name: Include delete tasks
+  include_tasks: delete.yml
+  when: storage_action | default('create') == 'delete'
