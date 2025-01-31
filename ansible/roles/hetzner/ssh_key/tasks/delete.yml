@@ -1,7 +1,18 @@
 # ansible/roles/hetzner/ssh_key/tasks/delete.yml
 ---
+- name: Validate SSH key name
+  assert:
+    that: ssh_key_name is defined
+    fail_msg: "SSH key name must be provided for deletion"
+
 - name: Delete SSH key from Hetzner
   hetzner.hcloud.hcloud_ssh_key:
     api_token: "{{ HCLOUD_TOKEN }}"
     name: "{{ ssh_key_name }}"
     state: absent
+  register: delete_result
+  
+- name: Log SSH key deletion
+  debug:
+    msg: "SSH key {{ ssh_key_name }} deleted successfully"
+  when: delete_result is changed

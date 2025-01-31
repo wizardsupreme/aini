@@ -1,0 +1,17 @@
+# ansible/playbooks/tests/deploy.yml
+---
+- name: Test Full Deployment
+  hosts: localhost
+  gather_facts: false
+  vars:
+    target: app
+
+  tasks:
+    - name: Include SSH key provisioning
+      include_playbook: ../configure/ssh_key.yml
+
+    - name: Include storage provisioning
+      include_playbook: ../configure/storage.yml
+
+    - name: Include server provisioning
+      include_playbook: ../provision/app_servers.yml

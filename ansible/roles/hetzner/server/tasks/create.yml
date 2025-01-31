@@ -1,44 +1,47 @@
 # ansible/roles/hetzner/server/tasks/create.yml
 ---
-- name: Verify required variables
+- name: Validate required variables
   assert:
     that:
-      - hcloud_token != ""
-      - server_type != ""
-      - target is defined
-    fail_msg: "Missing required variables. Ensure HCLOUD_TOKEN and *_SERVER_TYPE are set"
+      - server_name is defined
+      - server_type is defined
+      - image is defined
+      - location is defined
+    fail_msg: "Missing required variables for server creation"
 
-- name: Create Hetzner server
-  hetzner.hcloud.hcloud_server:
-    api_token: "{{ hcloud_token }}"
+- name: Check if server already exists
+  hcloud_server_info:
+    name: "{{ server_name }}"
+  register: server_info
+
+- name: Create server if it doesn't exist
+  hcloud_server:
     name: "{{ server_name }}"
     server_type: "{{ server_type }}"
     image: "{{ image }}"
     location: "{{ location }}"
-    ssh_keys: "{{ ssh_keys }}"
     state: present
-  register: server
+    labels:
+      project: "{{ project_name }}"
+      role: "{{ target }}"
+  register: server_result
+  when: server_info.hcloud_server_info | length == 0
 
 - name: Wait for server to be ready
   wait_for:
-    host: "{{ server.hcloud_server.ipv4_address }}"
+    host: "{{ server_result.hcloud_server.ipv4_address }}"
     port: 22
     timeout: 300
-  when: server.changed
+  when: server_result is changed
 
 - name: Add server to inventory
   add_host:
-    name: "{{ server.hcloud_server.ipv4_address }}"
-    groups: ["{{ target }}_servers"]
-    ansible_user: root
-    server_name: "{{ server_name }}"
-  when: server.changed
+    name: "{{ server_name }}"
+    groups: "{{ target }}"
+    ansible_host: "{{ server_result.hcloud_server.ipv4_address }}"
+  when: server_result is changed
 
-- name: Save server to inventory file
-  copy:
-    content: |
-      [{{ target }}_servers]
-      {{ server.hcloud_server.ipv4_address }} ansible_user=root server_name={{ server_name }}
-    dest: "{{ playbook_dir }}/../inventory/{{ target }}_servers.ini"
-    mode: '0644'
-  when: server.changed
+- name: Log server creation
+  debug:
+    msg: "Server {{ server_name }} created successfully with IP {{ server_result.hcloud_server.ipv4_address }}"
+  when: server_result is changed

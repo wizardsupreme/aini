@@ -1,0 +1,10 @@
+# ansible/playbooks/provision/app_servers.yml
+---
+- name: Provision Application Server
+  hosts: localhost
+  gather_facts: false
+
+  roles:
+    - role: hetzner/server
+      vars:
+        server_action: create

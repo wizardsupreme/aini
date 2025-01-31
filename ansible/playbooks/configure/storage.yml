@@ -1,0 +1,10 @@
+# ansible/playbooks/configure/storage.yml
+---
+- name: Configure Storage
+  hosts: localhost
+  gather_facts: false
+
+  roles:
+    - role: hetzner/storage
+      vars:
+        storage_action: create

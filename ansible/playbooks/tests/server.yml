@@ -1,0 +1,20 @@
+---
+- name: Test server provisioning
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Test server creation
+      include_playbook: ../provision/app_servers.yml
+      vars:
+        action: create
+
+    - name: Verify server is running
+      # Add verification tasks
+
+    - name: Test server deletion
+      include_playbook: ../provision/app_servers.yml
+      vars:
+        action: delete
+
+    - name: Verify server is deleted
+      # Add verification tasks

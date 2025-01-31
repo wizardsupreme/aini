@@ -1,0 +1,118 @@
+I'm working on an infrastructure automation project called AINI using Ansible to manage Hetzner Cloud resources. I have the basic role structure set up for managing servers, storage, and SSH keys. Could you help me implement the core functionality for these roles?
+
+Current directory structure:
+```
+ansible/
+├── defaults/
+│   └── main.yml
+├── inventory/
+├── playbooks/
+│   ├── configure/
+│   │   ├── apps.yml
+│   │   ├── base.yml
+│   │   ├── ml.yml
+│   │   ├── ssh_key.yml
+│   │   └── storage.yml
+│   ├── provision/
+│   │   ├── app_servers.yml
+│   │   └── gpu_servers.yml
+│   ├── tests/
+│   │   ├── test_traefik.yml
+│   │   ├── deploy.yml
+│   │   ├── server.yml
+│   │   ├── ssh_key.yml
+│   │   └── storage.yml
+│   └── deploy.yml
+├── roles/
+│   ├── common/
+│   │   ├── env_loader/
+│   │   ├── traefik/
+│   │   ├── consul/
+│   │   └── vault/
+│   └── hetzner/
+│       ├── server/
+│       ├── storage/
+│       └── ssh_key/
+└── requirements.yml
+```
+
+Key configuration files:
+
+`ansible/defaults/main.yml`:
+```yaml
+# Project-wide defaults
+project_name: "***REMOVED***"
+data_dir: "/opt/{{ project_name }}"
+default_location: "fsn1"
+default_image: "ubuntu-22.04"
+
+# Storage defaults
+storage_location: "eu-central"
+credentials_file: ".env.s3"
+
+# Server type mappings
+server_types:
+  app: "{{ APP_SERVER_TYPE }}"
+  gpu: "{{ GPU_SERVER_TYPE }}"
+```
+
+`ansible/roles/hetzner/server/defaults/main.yml`:
+```yaml
+server_action: "create"
+server_type: "{{ server_types[target] }}"
+server_name: "{{ project_name }}-{{ target }}"
+image: "{{ default_image }}"
+location: "{{ default_location }}"
+```
+
+`ansible/roles/hetzner/storage/defaults/main.yml`:
+```yaml
+storage_action: "create"
+location: "{{ storage_location }}"
+bucket_name: "{{ S3_BUCKET }}"
+credentials_file: "{{ credentials_file }}"
+```
+
+`ansible/roles/hetzner/ssh_key/defaults/main.yml`:
+```yaml
+ssh_action: "create"
+ssh_key_name: "{{ project_name }}-key"
+ssh_public_key_file: "~/.ssh/id_rsa.pub"
+```
+
+`ansible/roles/hetzner/server/tasks/main.yml`:
+```yaml
+---
+- name: Include create tasks
+  include_tasks: create.yml
+  when: server_action == 'create'
+
+- name: Include delete tasks
+  include_tasks: delete.yml
+  when: server_action == 'delete'
+```
+
+`ansible/playbooks/provision/app_servers.yml`:
+```yaml
+---
+- name: Manage Application Server
+  hosts: localhost
+  gather_facts: false
+  vars:
+    env_file: "{{ playbook_dir }}/../../.env"
+
+  roles:
+    - role: common/env_loader
+    - role: hetzner/server
+      vars:
+        target: app
+```
+
+I need help with:
+1. Implementing the task files for each role (create.yml, delete.yml)
+2. Setting up proper error handling and validation
+3. Ensuring consistent variable usage across roles
+4. Adding proper logging and debugging output
+5. Implementing the deployment playbook that uses these roles
+
+Can you help me implement these components with a focus on reliability and maintainability?

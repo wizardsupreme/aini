@@ -1,4 +1,3 @@
-# ansible/playbooks/deploy.yml
 ---
 - name: Deploy AINI Infrastructure
   hosts: localhost
@@ -12,21 +11,28 @@
     - name: Include project defaults
       include_vars:
         file: "{{ project_defaults }}"
+      tags: ['always']
 
   roles:
     # Load environment variables
     - role: common/env_loader
+      tags: ['always']
 
     # Setup infrastructure
     - role: hetzner/ssh_key
       vars:
         ssh_action: create
+      tags: ['infrastructure', 'ssh_key']
+      
     - role: hetzner/storage
       vars:
         storage_action: create
+      tags: ['infrastructure', 'storage']
+      
     - role: hetzner/server
       vars:
         server_action: create
+      tags: ['infrastructure', 'servers']
 
   post_tasks:
     - name: Wait for server to be ready
@@ -34,6 +40,7 @@
         host: "{{ hostvars[groups[target + '_servers'][0]]['ansible_host'] }}"
         port: 22
         timeout: 300
+      tags: ['infrastructure', 'servers']
 
 - name: Configure Infrastructure
   hosts: "{{ target }}_servers"
@@ -46,12 +53,17 @@
     - name: Include project defaults
       include_vars:
         file: "{{ project_defaults }}"
+      tags: ['always']
     
     - name: Load environment variables
       include_role:
         name: common/env_loader
+      tags: ['always']
 
   roles:
     - role: common/traefik
+      tags: ['configure', 'traefik']
     - role: common/consul
+      tags: ['configure', 'consul']
     - role: common/vault
+      tags: ['configure', 'vault']

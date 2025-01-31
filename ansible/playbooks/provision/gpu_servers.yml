@@ -1,0 +1,10 @@
+# ansible/playbooks/provision/gpu_servers.yml
+---
+- name: Provision GPU Server
+  hosts: localhost
+  gather_facts: false
+
+  roles:
+    - role: hetzner/server
+      vars:
+        server_action: create

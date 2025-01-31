@@ -1,5 +1,6 @@
 # ansible/roles/hetzner/server/defaults/main.yml
 ---
+server_action: "create"  # Default action
 server_type: "{{ server_types[target] }}"
 server_name: "{{ project_name }}-{{ target }}"
 image: "{{ default_image }}"

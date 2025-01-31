@@ -1,0 +1,10 @@
+# ansible/playbooks/tests/ssh_key.yml
+---
+- name: Test SSH Key Management
+  hosts: localhost
+  gather_facts: false
+
+  roles:
+    - role: hetzner/ssh_key
+      vars:
+        ssh_action: "{{ action | default('create') }}"

@@ -1,5 +1,6 @@
 # ansible/roles/hetzner/storage/defaults/main.yml
 ---
+storage_action: "create"  # Default action
 location: "{{ storage_location }}"
 bucket_name: "{{ S3_BUCKET }}"
 credentials_file: "{{ credentials_file }}"

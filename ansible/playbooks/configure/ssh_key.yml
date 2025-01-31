@@ -1,0 +1,10 @@
+# ansible/playbooks/configure/ssh_key.yml
+---
+- name: Configure SSH Keys
+  hosts: localhost
+  gather_facts: false
+
+  roles:
+    - role: hetzner/ssh_key
+      vars:
+        ssh_action: create
