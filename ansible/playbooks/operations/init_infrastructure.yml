@@ -1,0 +1,105 @@
+# ansible/playbooks/operations/init_infrastructure.yml
+---
+- name: Initialize AINI Infrastructure
+  hosts: localhost
+  gather_facts: false
+  vars:
+    hcloud_token: "{{ lookup('env', 'HCLOUD_TOKEN') }}"
+    bucket_name: "***REMOVED***-consul-backup"
+    
+  tasks:
+    - name: Check if S3 credentials exist in Consul
+      uri:
+        url: "http://localhost:8500/v1/kv/***REMOVED***/config/storage"
+        method: GET
+      register: consul_config
+      failed_when: false
+
+    - name: Create Object Storage credentials
+      uri:
+        url: https://api.hetzner.cloud/v1/object_storages/credentials
+        method: POST
+        headers:
+          Authorization: "Bearer {{ hcloud_token }}"
+        body_format: json
+        body:
+          name: "***REMOVED***-storage"
+        status_code: [201]
+      register: storage_creds
+      when: consul_config.status != 200
+
+    - name: Create Object Storage
+      uri:
+        url: https://api.hetzner.cloud/v1/object_storages
+        method: POST
+        headers:
+          Authorization: "Bearer {{ hcloud_token }}"
+        body_format: json
+        body:
+          name: "{{ bucket_name }}"
+          labels: {}
+        status_code: [201]
+      register: storage
+      when: consul_config.status != 200
+
+    - name: Install s3cmd
+      apt:
+        name: s3cmd
+        state: present
+      become: true
+      when: consul_config.status != 200
+
+    - name: Create temporary s3cmd config
+      copy:
+        content: |
+          [default]
+          access_key = {{ storage_creds.json.credentials.access_key }}
+          secret_key = {{ storage_creds.json.credentials.secret_key }}
+          host_base = s3.eu-central-1.hetzner.com
+          host_bucket = %(bucket)s.s3.eu-central-1.hetzner.com
+          use_https = True
+        dest: /tmp/.s3cfg
+        mode: '0600'
+      when: consul_config.status != 200
+
+    - name: Save credentials to Consul
+      consul_kv:
+        key: "***REMOVED***/config/storage"
+        value: |
+          {
+            "s3_enabled": true,
+            "s3_access_key": "{{ storage_creds.json.credentials.access_key }}",
+            "s3_secret_key": "{{ storage_creds.json.credentials.secret_key }}",
+            "s3_bucket": "{{ bucket_name }}",
+            "s3_endpoint": "https://s3.eu-central-1.hetzner.com",
+            "s3_region": "eu-central-1"
+          }
+      when: consul_config.status != 200
+
+    - name: Test Consul backend configuration
+      block:
+        - name: Create test key
+          consul_kv:
+            key: "test/init"
+            value: "Initialization test at {{ ansible_date_time.iso8601 }}"
+        
+        - name: Verify backup capability
+          uri:
+            url: "http://localhost:8500/v1/snapshot"
+            method: GET
+            dest: "/tmp/consul_test.snap"
+          register: backup_test
+          
+        - name: Upload test backup
+          command: >
+            s3cmd put /tmp/consul_test.snap 
+            s3://{{ bucket_name }}/test/init_backup.snap 
+            --config=/tmp/.s3cfg
+      always:
+        - name: Cleanup temporary files
+          file:
+            path: "{{ item }}"
+            state: absent
+          with_items:
+            - /tmp/.s3cfg
+            - /tmp/consul_test.snap

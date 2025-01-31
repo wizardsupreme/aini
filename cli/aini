@@ -22,6 +22,16 @@ class ConsulStateManager:
         )
         self.prefix = '***REMOVED***/state/'
 
+    def init():
+        """Initialize AINI infrastructure"""
+        if not os.getenv('HCLOUD_TOKEN'):
+            console.print("[red]Error:[/red] HCLOUD_TOKEN not set in environment")
+            return
+
+        console.print("Initializing AINI infrastructure...")
+        subprocess.run(['ansible-playbook', 
+                    'ansible/playbooks/operations/init_infrastructure.yml'])
+
     def get(self, key):
         index, data = self.consul.kv.get(f"{self.prefix}{key}")
         if data:

@@ -1,3 +1,4 @@
+# ansible/playbooks/operations/start_server.yml
 ---
 - name: Manage cloud server
   hosts: localhost
@@ -29,4 +30,11 @@
     - name: Add server to inventory
       add_host:
         name: "{{ server.hcloud_server.ipv4_address }}"
-        groups: new_servers
+        groups: 
+          - new_servers
+          - "{{ target }}_servers"
+
+    # If this is an app server, configure it
+    - name: Configure app server
+      include_playbook: ../deploy_app_server.yml
+      when: target == "app"

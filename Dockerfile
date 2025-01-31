@@ -6,12 +6,18 @@ RUN apt-get update && apt-get install -y \
     curl \
     git \
     ssh \
+    unzip \
     && rm -rf /var/lib/apt/lists/*
+
+# Install AWS CLI
+RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \
+    && unzip awscliv2.zip \
+    && ./aws/install \
+    && rm -rf aws awscliv2.zip
 
 # Install Python dependencies
 COPY requirements.txt /
-RUN pip install -r /requirements.txt \
-    && pip install python-consul boto3 fastapi uvicorn
+RUN pip install -r /requirements.txt
 
 # Install Ansible requirements
 COPY ansible/requirements.yml /ansible/
