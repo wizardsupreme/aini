@@ -39,19 +39,22 @@ The fastest way to get started with AINI is using Docker:
 git clone https://github.com/yourusername/***REMOVED***.git
 cd ***REMOVED***
 
-# Configure your credentials
-cat > .env << EOL
-WASABI_ACCESS_KEY=your_key
-WASABI_SECRET_KEY=your_secret
-WASABI_BUCKET=your_bucket
-HCLOUD_TOKEN=your_hetzner_token
-EOL
+# Create your environment file from the example
+cp .env.example .env
+
+# Edit the .env file and add your credentials
+# Required variables to set:
+# - HCLOUD_TOKEN (your Hetzner Cloud API token)
+# - S3_ACCESS_KEY (if S3_ENABLED=true)
+# - S3_SECRET_KEY (if S3_ENABLED=true)
+# - S3_BUCKET (if S3_ENABLED=true)
+# - S3_ENDPOINT (if S3_ENABLED=true)
 
 # Start AINI
-docker compose up -d
+docker-compose up -d
 
 # Use AINI CLI
-docker exec ***REMOVED***-control ***REMOVED*** --help
+docker-compose exec ***REMOVED***-control ***REMOVED*** --help
 ```
 
 ## Infrastructure Components
@@ -79,19 +82,19 @@ AINI manages two types of servers:
 
 ```bash
 # View status
-docker exec ***REMOVED***-control ***REMOVED*** status
+docker-compose exec ***REMOVED***-control ***REMOVED*** status
 
 # Start servers
-docker exec ***REMOVED***-control ***REMOVED*** start app  # Start application server
-docker exec ***REMOVED***-control ***REMOVED*** start gpu  # Start GPU server
+docker-compose exec ***REMOVED***-control ***REMOVED*** start app  # Start application server
+docker-compose exec ***REMOVED***-control ***REMOVED*** start gpu  # Start GPU server
 
 # Stop servers
-docker exec ***REMOVED***-control ***REMOVED*** stop app
-docker exec ***REMOVED***-control ***REMOVED*** stop gpu
+docker-compose exec ***REMOVED***-control ***REMOVED*** stop app
+docker-compose exec ***REMOVED***-control ***REMOVED*** stop gpu
 
 # Deploy services
-docker exec ***REMOVED***-control ***REMOVED*** deploy nextcloud
-docker exec ***REMOVED***-control ***REMOVED*** deploy ml-stack
+docker-compose exec ***REMOVED***-control ***REMOVED*** deploy nextcloud
+docker-compose exec ***REMOVED***-control ***REMOVED*** deploy ml-stack
 ```
 
 ### Configuration
@@ -100,14 +103,26 @@ All configuration is managed through Consul and persisted in Wasabi:
 
 ```bash
 # Configure cloud provider
-docker exec ***REMOVED***-control ***REMOVED*** configure provider
+docker-compose exec ***REMOVED***-control ***REMOVED*** configure provider
 
 # Configure storage
-docker exec ***REMOVED***-control ***REMOVED*** configure storage
+docker-compose exec ***REMOVED***-control ***REMOVED*** configure storage
 
 # Configure services
-docker exec ***REMOVED***-control ***REMOVED*** configure services
+docker-compose exec ***REMOVED***-control ***REMOVED*** configure services
 ```
+
+### Monitoring & Dashboards
+
+Access these interfaces through your **application server's** IP/DNS:
+
+- **Consul Dashboard**: `http://<app-server-ip>:8500`
+  - View and manage service configurations
+  - Monitor service health
+  - Access key-value store
+  
+- **Traefik Dashboard**: `http://<app-server-ip>:8080`
+- **Netdata Monitoring**: `http://<app-server-ip>:19999`
 
 ## Project Structure
 
@@ -191,12 +206,12 @@ Commands:
 
 ### Running Tests
 ```bash
-docker exec ***REMOVED***-control ***REMOVED*** test
+docker-compose exec ***REMOVED***-control ***REMOVED*** test
 ```
 
 ### Building Documentation
 ```bash
-docker exec ***REMOVED***-control ***REMOVED*** docs build
+docker-compose exec ***REMOVED***-control ***REMOVED*** docs build
 ```
 
 ### Local Development Setup
@@ -229,3 +244,87 @@ MIT
 ---
 
 **Note**: AINI is under active development. Features and APIs may change.
+
+## Troubleshooting
+
+If you get "container not running" errors:
+
+1. Verify the control container is running:
+```bash
+docker-compose ps
+```
+
+2. Check container logs:
+```bash
+docker-compose logs control
+```
+
+3. If needed, restart the stack:
+```bash
+docker-compose down && docker-compose up -d
+```
+
+## Dashboard
+
+AINI provides a REST API for managing your infrastructure. The API is built with FastAPI and provides:
+- Server status monitoring
+- Server lifecycle management
+- Infrastructure control endpoints
+
+### API Endpoints
+
+The API server runs on port 3000 and provides these endpoints:
+
+```bash
+GET /api/status              # Get infrastructure status
+POST /api/start/{app|gpu}    # Start a server
+POST /api/stop/{app|gpu}     # Stop a server
+```
+
+You can also access the auto-generated API documentation at:
+- Swagger UI: `http://localhost:3000/docs`
+- ReDoc: `http://localhost:3000/redoc`
+
+### Running the API Server
+
+The API server is automatically started when you run:
+```bash
+docker-compose up -d
+```
+
+### Testing the API
+
+You can test the API using curl:
+
+```bash
+# Get status
+curl http://localhost:3000/api/status
+
+# Start app server
+curl -X POST http://localhost:3000/api/start/app
+
+# Stop app server
+curl -X POST http://localhost:3000/api/stop/app
+
+# Start GPU server
+curl -X POST http://localhost:3000/api/start/gpu
+
+# Stop GPU server
+curl -X POST http://localhost:3000/api/stop/gpu
+```
+
+### Development
+
+For API development:
+
+1. Install Python dependencies:
+```bash
+pip install fastapi uvicorn
+```
+
+2. Run the API server in development mode:
+```bash
+python cli/api.py
+```
+
+The API will be available at `http://localhost:3000`

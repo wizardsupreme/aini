@@ -2,16 +2,16 @@ version: '3.8'
 
 services:
   consul:
-    image: progrium/consul:latest
+    image: hashicorp/consul:latest
     container_name: ***REMOVED***-consul
     volumes:
-      - ${STORAGE_TYPE:-.***REMOVED***-state}/consul:/consul/data
+      - consul_data:/consul/data
     networks:
       - ***REMOVED***-net
     ports:
       - "8500:8500"
       - "8600:8600/udp"
-    command: -server -bootstrap -ui-dir /ui
+    command: agent -server -bootstrap -ui -client=0.0.0.0
 
   ***REMOVED***-control:
     build:
@@ -21,6 +21,8 @@ services:
       - .:/***REMOVED***
       - /var/run/docker.sock:/var/run/docker.sock
       - ${HOME}/.ssh:/root/.ssh:ro
+    ports:
+      - "3000:3000"  # FastAPI server
     environment:
       - CONSUL_HTTP_ADDR=consul:8500
       - HCLOUD_TOKEN=${HCLOUD_TOKEN}
@@ -35,23 +37,11 @@ services:
       - ***REMOVED***-net
     depends_on:
       - consul
-
-  dashboard:
-    image: b4bz/homer:latest
-    container_name: ***REMOVED***-dashboard
-    ports:
-      - "8080:8080"
-    volumes:
-      - ./dashboard/assets:/www/assets
-      - ./dashboard/config.yml:/www/config.yml
-    environment:
-      - INIT_ASSETS=0  # Don't overwrite our custom assets
-    networks:
-      - ***REMOVED***-net
-    depends_on:
-      - ***REMOVED***-control
-      - consul
+    command: python cli/api.py
 
 networks:
   ***REMOVED***-net:
     name: ***REMOVED***-net
+
+volumes:
+  consul_data:

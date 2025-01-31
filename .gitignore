@@ -1,8 +1,10 @@
+# Local state and data
+.***REMOVED***-state/
+consul/data/
+
 # Environment files
 .env
-
-# Local state
-.***REMOVED***-state/
+.env*.local
 
 # Python
 __pycache__/

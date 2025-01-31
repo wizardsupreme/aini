@@ -7,23 +7,70 @@ import yaml
 import subprocess
 import json
 from pathlib import Path
+import boto3
+from botocore.exceptions import ClientError
+import consul
 
 console = Console()
 
-def get_state_manager():
-    """Get appropriate state manager based on configuration"""
-    use_consul = os.getenv('USE_CONSUL', 'true').lower() == 'true'
-    
-    if use_consul:
-        import consul
-        return consul.Consul()
-    else:
-        return FileStateManager()
-
-class FileStateManager:
-    """Simple file-based state management"""
+class ConsulStateManager:
+    """Consul-based state management"""
     def __init__(self):
-        self.state_file = Path.home() / '.***REMOVED***' / 'state.json'
+        self.consul = consul.Consul(
+            host=os.getenv('CONSUL_HTTP_ADDR', 'localhost').split(':')[0],
+            port=int(os.getenv('CONSUL_HTTP_ADDR', 'localhost:8500').split(':')[1])
+        )
+        self.prefix = '***REMOVED***/state/'
+
+    def get(self, key):
+        index, data = self.consul.kv.get(f"{self.prefix}{key}")
+        if data:
+            return json.loads(data['Value'].decode('utf-8'))
+        return None
+
+    def put(self, key, value):
+        self.consul.kv.put(f"{self.prefix}{key}", json.dumps(value))
+
+class S3BackupManager:
+    """S3-based backup for Consul state"""
+    def __init__(self):
+        self.bucket = os.getenv('S3_BUCKET')
+        self.s3_client = boto3.client(
+            's3',
+            aws_access_key_id=os.getenv('S3_ACCESS_KEY'),
+            aws_secret_access_key=os.getenv('S3_SECRET_KEY'),
+            endpoint_url=os.getenv('S3_ENDPOINT'),
+            region_name=os.getenv('S3_REGION', 'us-east-1')
+        )
+        self.backup_key = '***REMOVED***-consul-backup.json'
+
+    def backup_consul_state(self, consul_manager):
+        """Backup all Consul state to S3"""
+        index, data = consul_manager.consul.kv.get(consul_manager.prefix, recurse=True)
+        if data:
+            state = {item['Key']: json.loads(item['Value'].decode('utf-8')) 
+                    for item in data if item['Value']}
+            self.s3_client.put_object(
+                Bucket=self.bucket,
+                Key=self.backup_key,
+                Body=json.dumps(state, indent=2)
+            )
+
+    def restore_consul_state(self, consul_manager):
+        """Restore Consul state from S3"""
+        try:
+            response = self.s3_client.get_object(Bucket=self.bucket, Key=self.backup_key)
+            state = json.loads(response['Body'].read().decode('utf-8'))
+            for key, value in state.items():
+                consul_manager.put(key.replace(consul_manager.prefix, ''), value)
+        except ClientError as e:
+            if e.response['Error']['Code'] != 'NoSuchKey':
+                raise
+
+class LocalStateManager:
+    """Local file-based state management (fallback)"""
+    def __init__(self):
+        self.state_file = Path.home() / '.***REMOVED***-state' / 'state.json'
         self.state_file.parent.mkdir(exist_ok=True)
         if not self.state_file.exists():
             self.state_file.write_text('{}')
@@ -36,6 +83,41 @@ class FileStateManager:
         state = json.loads(self.state_file.read_text())
         state[key] = value
         self.state_file.write_text(json.dumps(state, indent=2))
+
+def get_state_manager():
+    """Get appropriate state manager based on configuration"""
+    try:
+        # Always try to use Consul first since it's our primary state store
+        consul_manager = ConsulStateManager()
+        
+        # If S3 is configured, use it for backup/restore
+        if (os.getenv('S3_ENABLED', 'false').lower() == 'true' and
+            os.getenv('S3_ACCESS_KEY') and
+            os.getenv('S3_SECRET_KEY') and
+            os.getenv('S3_BUCKET')):
+            
+            s3_backup = S3BackupManager()
+            try:
+                # Try to restore state from S3 if Consul is empty
+                if not consul_manager.get('initialized'):
+                    s3_backup.restore_consul_state(consul_manager)
+                    consul_manager.put('initialized', True)
+                
+                # Set up backup after each state change
+                original_put = consul_manager.put
+                def put_with_backup(key, value):
+                    original_put(key, value)
+                    s3_backup.backup_consul_state(consul_manager)
+                consul_manager.put = put_with_backup
+                
+            except Exception as e:
+                console.print(f"[yellow]Warning: S3 backup/restore failed: {str(e)}[/yellow]")
+        
+        return consul_manager
+    
+    except Exception as e:
+        console.print(f"[yellow]Warning: Falling back to local state storage: {str(e)}[/yellow]")
+        return LocalStateManager()
 
 @click.group()
 def cli():

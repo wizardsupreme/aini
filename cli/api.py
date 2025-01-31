@@ -1,142 +1,148 @@
-from flask import Flask, jsonify, request
-import os
-import consul
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 import subprocess
+from typing import Literal
 import json
-from pathlib import Path
+import os
 
-app = Flask(__name__)
+app = FastAPI()
 
-def get_state_manager():
-    return consul.Consul()
+# Enable CORS for development
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-def save_config(config):
-    consul_client = get_state_manager()
-    for key, value in config.items():
-        consul_client.kv.put(f'config/{key}', value)
+# Mount static files
+static_dir = os.path.join(os.path.dirname(__file__), "static")
+app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
-def get_config():
-    consul_client = get_state_manager()
-    config = {}
-    index, items = consul_client.kv.get('config/', recurse=True) or (None, [])
-    if items:
-        for item in items:
-            key = item['Key'].replace('config/', '')
-            config[key] = item['Value'].decode() if item['Value'] else ''
-    return config
+@app.get("/")
+async def root():
+    return FileResponse(os.path.join(static_dir, "index.html"))
 
-@app.route('/config', methods=['GET', 'POST'])
-def handle_config():
-    if request.method == 'POST':
-        config = request.json
-        save_config(config)
+@app.get("/favicon.ico")
+async def favicon():
+    return FileResponse(os.path.join(static_dir, "favicon.svg"))
+
+@app.get("/sw.js")
+async def service_worker():
+    # Return empty response to prevent 404 errors
+    return {}
+
+def check_consul_connection():
+    try:
+        # Try to connect to Consul's API directly
+        consul_result = subprocess.run(
+            ['curl', '-s', '-f', 'http://localhost:8500/v1/status/leader'],
+            capture_output=True,
+            text=True,
+            timeout=2  # Add timeout to prevent hanging
+        )
+        return consul_result.returncode == 0 and consul_result.stdout.strip()
+    except Exception:
+        return False
+
+@app.get("/api/status")
+async def get_status():
+    try:
+        result = subprocess.run(['***REMOVED***', 'status'], 
+                              capture_output=True, 
+                              text=True)
+        if result.returncode != 0:
+            raise HTTPException(status_code=500, detail=result.stderr)
         
-        # Update .env file for services that need it
-        env_content = []
-        for key, value in config.items():
-            env_content.append(f'{key}={value}')
+        # Check Consul connection
+        consul_connected = check_consul_connection()
         
-        with open('.env', 'w') as f:
-            f.write('\n'.join(env_content))
-            
-        return jsonify({'status': 'success'})
-    else:
-        return jsonify(get_config())
+        # Check S3 configuration
+        s3_enabled = (
+            os.environ.get('S3_ENABLED', '').lower() == 'true' and
+            os.environ.get('S3_ACCESS_KEY') and
+            os.environ.get('S3_SECRET_KEY') and
+            os.environ.get('S3_BUCKET')
+        )
+        
+        return {
+            "success": True,
+            "output": result.stdout,
+            "services": {
+                "consul": consul_connected,
+                "s3": s3_enabled
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
-@app.route('/ansible/playbook/<playbook>', methods=['POST'])
-def run_playbook(playbook):
-    # Get variables from request
-    vars_dict = request.json or {}
-    
-    # Create vars file
-    vars_file = Path('ansible/vars.json')
-    vars_file.write_text(json.dumps(vars_dict))
-    
-    # Run ansible playbook
-    cmd = [
-        'ansible-playbook',
-        f'ansible/playbooks/{playbook}.yml',
-        '-e', f'@{vars_file}'
-    ]
-    
-    process = subprocess.Popen(
-        cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE
-    )
-    
-    stdout, stderr = process.communicate()
-    
-    return jsonify({
-        'status': 'success' if process.returncode == 0 else 'error',
-        'output': stdout.decode(),
-        'error': stderr.decode() if stderr else None
-    })
+@app.post("/api/start/{server_type}")
+async def start_server(server_type: Literal['app', 'gpu']):
+    try:
+        result = subprocess.run(['***REMOVED***', 'start', server_type], 
+                              capture_output=True, 
+                              text=True)
+        if result.returncode != 0:
+            raise HTTPException(status_code=500, detail=result.stderr)
+        return {
+            "success": True,
+            "output": result.stdout
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
-@app.route('/status/<server_type>')
-def server_status(server_type):
-    state_manager = get_state_manager()
-    server_info = state_manager.kv.get(f'servers/{server_type}')[1]
-    return jsonify(server_info or {'status': 'not_running'})
+@app.post("/api/stop/{server_type}")
+async def stop_server(server_type: Literal['app', 'gpu']):
+    try:
+        result = subprocess.run(['***REMOVED***', 'stop', server_type], 
+                              capture_output=True, 
+                              text=True)
+        if result.returncode != 0:
+            raise HTTPException(status_code=500, detail=result.stderr)
+        return {
+            "success": True,
+            "output": result.stdout
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
-@app.route('/setup', methods=['POST'])
-def initial_setup():
-    """Handle initial setup with provided credentials"""
-    config = request.json
-    
-    # Save configuration
-    save_config(config)
-    
-    # Run initial setup playbook if provided
-    if config.get('run_setup', False):
-        return run_playbook('initial_setup')
-    
-    return jsonify({'status': 'success'})
+@app.get("/api/settings")
+async def get_settings():
+    try:
+        # Get all relevant environment variables with actual values
+        env_vars = {
+            'CONSUL_HTTP_ADDR': os.environ.get('CONSUL_HTTP_ADDR', ''),
+            'HCLOUD_TOKEN': os.environ.get('HCLOUD_TOKEN', 'Not set'),
+            'S3_ENABLED': os.environ.get('S3_ENABLED', 'false'),
+            'S3_ACCESS_KEY': os.environ.get('S3_ACCESS_KEY', 'Not set'),
+            'S3_SECRET_KEY': os.environ.get('S3_SECRET_KEY', 'Not set'),
+            'S3_BUCKET': os.environ.get('S3_BUCKET', ''),
+            'S3_ENDPOINT': os.environ.get('S3_ENDPOINT', ''),
+            'S3_REGION': os.environ.get('S3_REGION', ''),
+            'DEBUG': os.environ.get('DEBUG', 'false')
+        }
 
-@app.route('/validate/credentials', methods=['POST'])
-def validate_credentials():
-    """Validate provided credentials"""
-    credentials = request.json
-    valid = True
-    messages = []
-    
-    # Check Hetzner token
-    if 'HCLOUD_TOKEN' in credentials:
-        try:
-            # Add Hetzner API check
-            pass
-        except Exception as e:
-            valid = False
-            messages.append(f'Invalid Hetzner token: {str(e)}')
-    
-    # Check S3 credentials
-    if credentials.get('S3_ENABLED') == 'true':
-        try:
-            # Add S3 connection check
-            pass
-        except Exception as e:
-            valid = False
-            messages.append(f'Invalid S3 credentials: {str(e)}')
-    
-    return jsonify({
-        'valid': valid,
-        'messages': messages
-    })
+        # Check Consul connection
+        consul_connected = check_consul_connection()
 
-@app.route('/start/<server_type>', methods=['POST'])
-def start_server(server_type):
-    # Run the appropriate Ansible playbook
-    return run_playbook(f'start_{server_type}_server')
+        return {
+            "success": True,
+            "settings": {
+                "env": env_vars,
+                "services": {
+                    "consul": {
+                        "connected": consul_connected,
+                        "url": "http://localhost:8500"
+                    }
+                }
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
-@app.route('/stop/<server_type>', methods=['POST'])
-def stop_server(server_type):
-    # Run the appropriate Ansible playbook
-    return run_playbook(f'stop_{server_type}_server')
-
-@app.route('/logs')
-def get_logs():
-    # Implement log retrieval
-    return jsonify({'logs': []})
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080)
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=3000) 

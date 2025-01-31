@@ -10,7 +10,8 @@ RUN apt-get update && apt-get install -y \
 
 # Install Python dependencies
 COPY requirements.txt /
-RUN pip install -r /requirements.txt
+RUN pip install -r /requirements.txt \
+    && pip install python-consul boto3 fastapi uvicorn
 
 # Install Ansible requirements
 COPY ansible/requirements.yml /ansible/
@@ -28,5 +29,5 @@ RUN chmod +x /***REMOVED***/cli/***REMOVED***
 # Add to PATH
 ENV PATH="/***REMOVED***/cli:${PATH}"
 
-# Default command shows help
-CMD ["***REMOVED***", "--help"]
+# Start the API server
+CMD ["python", "cli/api.py"]
