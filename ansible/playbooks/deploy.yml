@@ -18,26 +18,23 @@
 - import_playbook: provision/app_servers.yml
   vars:
     state: "{{ 'present' if action == 'create' else 'absent' }}"
-    target: "{{ target | default('app') }}"
-  tags: ['provision', 'servers', 'apps-servers']
+    target: "{{ target | default('provision-cpu') }}"
 
-- import_playbook: provision/gpu_servers.yml
-  vars:
-    state: "{{ 'present' if action == 'create' else 'absent' }}"
-    target: "{{ target | default('gpu') }}"
-  tags: ['provision', 'servers', 'gpu']
-
+# - import_playbook: provision/gpu_servers.yml
+#   vars:
+#     state: "{{ 'present' if action == 'create' else 'absent' }}"
+#     target: "{{ target | default('provision-gpu') }}"
 
 # configuration playbooks
 - import_playbook: configure/base.yml
   vars:
     state: "{{ 'present' if action == 'create' else 'absent' }}"
-    target: "{{ target | default('app') }}"
-  tags: ['configure', 'base']
+    target: "{{ target | default('configure-base') }}"
 
 - import_playbook: configure/apps.yml
-  when: action == 'create' and target == 'app'
-  tags: ['configure', 'apps']
+  vars:
+    state: "{{ 'present' if action == 'create' else 'absent' }}"
+    target: "{{ target | default('configure-app') }}"
 
 # - import_playbook: configure/ml.yml
 #   when: action == 'create' and target == 'gpu'

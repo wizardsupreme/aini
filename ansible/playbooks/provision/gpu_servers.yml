@@ -11,8 +11,8 @@
         api_token: "{{ hetzner_token }}"
         name: "{{ project_name }}-gpu"
         server_type: "{{ gpu_server_type }}"
-        image: "ubuntu-22.04"
-        location: "fsn1"
+        image: "ubuntu-24.04"
+        location: "hel1"
         ssh_keys:
           - "{{ hetzner_ssh_key_name }}"
         state: present
