@@ -8,4 +8,4 @@
   with_items:
     - "../../defaults"
     - "../../vars/common"
-    - "../../vars/{{ lookup('env', 'DEPLOY_ENV') | default('development') }}"
+    - "../../vars/{{ lookup('env', 'DEPLOY_ENV') | default('dev2') }}"

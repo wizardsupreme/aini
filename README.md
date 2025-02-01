@@ -10,12 +10,12 @@ AINI provides automated deployment of AI and productivity infrastructure using D
 - Docker with IPv6 support
 - Complete application stack:
   - Traefik (reverse proxy + SSL)
-  - LibreChat (AI frontend)
-  - N8N (workflow automation)
+  - Netdata (monitoring)
   - Consul + Vault (configuration/secrets)
   - Nextcloud + OnlyOffice (file storage/editing)
-  - Netdata (monitoring)
   - Watchtower (automatic updates)
+  - LibreChat (AI frontend)
+  - N8N (workflow automation)
 
 ## Prerequisites
 
