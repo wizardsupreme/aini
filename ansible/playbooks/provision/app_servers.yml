@@ -5,9 +5,11 @@
   gather_facts: true
   vars_files:
     - "../../vars/secrets.yml"
+  vars:
+    state: "present"  # Can be 'present' or 'absent'
 
   tasks:
-    - name: Create server
+    - name: Manage server
       hcloud_server:
         api_token: "{{ hetzner_token }}"
         name: "{{ project_name }}-app"
@@ -16,11 +18,40 @@
         location: "fsn1"
         ssh_keys:
           - "{{ hetzner_ssh_key_name }}"
-        state: present
+        state: "{{ state }}"
       register: server
 
+    # Only run these tasks when creating the server
     - name: Add host to inventory
       add_host:
         name: "{{ server.hcloud_server.name }}"
         ansible_host: "{{ server.hcloud_server.ipv4_address }}"
         groups: app_servers
+      when: state == "present"
+
+    - name: Update inventory file
+      lineinfile:
+        path: "../../inventory/hosts"
+        line: "{{ server.hcloud_server.name }} ansible_host={{ server.hcloud_server.ipv4_address }}"
+        regexp: "^{{ server.hcloud_server.name }} ansible_host="
+        create: yes
+      delegate_to: localhost
+      when: state == "present"
+
+    - name: Ensure app_servers group exists in inventory
+      lineinfile:
+        path: "../../inventory/hosts"
+        line: "[app_servers]"
+        insertbefore: BOF
+        create: yes
+      delegate_to: localhost
+      when: state == "present"
+
+    # Remove from inventory when deleting
+    - name: Remove from inventory file
+      lineinfile:
+        path: "../../inventory/hosts"
+        regexp: "^{{ project_name }}-app ansible_host="
+        state: absent
+      delegate_to: localhost
+      when: state == "absent"

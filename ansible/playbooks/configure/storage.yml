@@ -7,18 +7,36 @@
     - "../../vars/secrets.yml"
 
   tasks:
-    - name: Create Hetzner Object Storage bucket
-      uri:
-        url: "{{ s3_endpoint }}/{{ s3_bucket }}"
-        method: PUT
-        headers:
-          Authorization: "Bearer {{ hetzner_token }}"
-          Date: "{{ ansible_date_time.iso8601 }}"
-        status_code: [200, 201, 409]  # 409 means bucket already exists
-      when: s3_enabled | bool
-      register: bucket_result
+    - name: Configure AWS CLI credentials
+      ansible.builtin.shell: |
+        aws configure set aws_access_key_id {{ s3_access_key }}
+        aws configure set aws_secret_access_key {{ s3_secret_key }}
+        aws configure set default.region {{ s3_region }}
+        aws configure set s3.endpoint_url {{ s3_endpoint }}
+      no_log: true
 
-    - name: Show bucket creation result
+    - name: List existing buckets
+      ansible.builtin.command: >
+        aws s3api list-buckets
+        --endpoint-url {{ s3_endpoint }}
+      register: list_result
+
+    - name: Show existing buckets
       debug:
-        msg: "Bucket {{ s3_bucket }} created successfully"
-      when: bucket_result.status == 201
+        msg: "{{ list_result.stdout }}"
+
+# Hetzner Object Storage bucket creation not working! so we will manually create from dashboard.
+    # - name: Create S3 bucket
+    #   ansible.builtin.command: >
+    #     aws s3api create-bucket 
+    #     --bucket {{ s3_bucket }} 
+    #     --endpoint-url {{ s3_endpoint }}
+    #   register: bucket_result
+    #   failed_when: bucket_result.rc != 0 and 'BucketAlreadyExists' not in bucket_result.stderr
+    #   changed_when: bucket_result.rc == 0
+    #   when: s3_enabled | bool
+
+    # - name: Show bucket creation result
+    #   debug:
+    #     msg: "Bucket {{ s3_bucket }} created successfully"
+    #   when: bucket_result.changed
