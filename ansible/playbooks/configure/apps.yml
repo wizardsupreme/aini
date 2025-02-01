@@ -1,6 +1,6 @@
 ---
 - name: Configure Applications
-  hosts: "{{ target }}_servers"
+  hosts: "{{ target | default('app') }}_servers"
   become: true
   pre_tasks:
     - include_tasks: ../includes/load_vars.yml

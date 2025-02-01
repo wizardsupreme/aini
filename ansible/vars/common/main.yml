@@ -1,12 +1,12 @@
 # Project Configuration
 project_name: "aini"  # Override in secrets.yml
-app_server_type: "cx11"
+app_server_type: "cax11"
 server_image: "ubuntu-24.04"
 server_location: "fsn1"
 
 # Network Configuration
-ipv6_enabled: true
-enable_ipv4: false
+enable_ipv6: true
+enable_ipv4: true
 
 # Storage Configuration
 s3_enabled: true
@@ -19,7 +19,7 @@ traefik_enabled: true
 # Project-wide defaults
 data_dir: "/opt/{{ project_name }}"
 default_location: "fsn1"
-default_image: "ubuntu-22.04"
+default_image: "ubuntu-24.04"
 
 # Storage defaults
 storage_location: "eu-central"

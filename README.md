@@ -99,6 +99,9 @@ ansible-playbook deploy.yml -e "action=create" --tags gpu
 
 # For deletion
 ansible-playbook deploy.yml -e "action=delete" --tags app
+
+# For base configuration
+ansible-playbook ansible/playbooks/configure/base.yml
 ```
 
 ## Directory Structure

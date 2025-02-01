@@ -4,6 +4,7 @@
     extensions: 
       - yml
       - yaml
+    files_matching: "^.*\\.(yml|yaml)$"
   with_items:
     - "../../defaults"
     - "../../vars/common"

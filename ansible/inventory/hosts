@@ -1,1 +1,2 @@
 [app_servers]
+aini-app ansible_host=49.13.143.252 ansible_user=root

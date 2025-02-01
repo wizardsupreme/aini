@@ -28,18 +28,18 @@
   tags: ['provision', 'servers', 'gpu']
 
 # Wait for server playbook
-- name: Wait for server
-  hosts: localhost
-  tasks:
-    - name: Wait for server to be ready
-      wait_for:
-        host: "{{ hostvars[groups[target + '_servers'][0]]['ansible_host'] }}"
-        port: 22
-        timeout: 300
-      tags: ['infrastructure', 'servers', 'app']
-      when: action == 'create'
+# - name: Wait for server
+#   hosts: localhost
+#   tasks:
+#     - name: Wait for server to be ready
+#       wait_for:
+#         host: "[{{ hostvars[groups[target + '_servers'][0]]['ansible_host'] }}]"
+#         port: 22
+#         timeout: 300
+#       tags: ['configure', 'servers', 'app']
+#       when: action == 'create'
 
-# onfiguration playbooks
+# configuration playbooks
 - import_playbook: configure/base.yml
   vars:
     state: "{{ 'present' if action == 'create' else 'absent' }}"

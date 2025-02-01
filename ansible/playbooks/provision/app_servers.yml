@@ -19,15 +19,14 @@
         ssh_keys:
           - "{{ hetzner_ssh_key_name }}"
         state: "{{ state }}"
-        enable_ipv4: false
-        enable_ipv6: true
+        enable_ipv4: "{{ enable_ipv4 }}"
+        enable_ipv6: "{{ enable_ipv6 }}"
       register: server
 
-    # Only run these tasks when creating the server
     - name: Add host to inventory
       add_host:
         name: "{{ server.hcloud_server.name }}"
-        ansible_host: "{{ server.hcloud_server.ipv6_address | regex_replace('/.*$','') }}"
+        ansible_host: "{{ server.hcloud_server.ipv4_address }}"
         ansible_python_interpreter: /usr/bin/python3
         groups: app_servers
       when: state == "present"
@@ -35,7 +34,7 @@
     - name: Update inventory file
       lineinfile:
         path: "../../inventory/hosts"
-        line: "{{ server.hcloud_server.name }} ansible_host={{ server.hcloud_server.ipv6_address | regex_replace('/.*$','') }} ansible_python_interpreter=/usr/bin/python3"
+        line: "{{ server.hcloud_server.name }} ansible_host={{ server.hcloud_server.ipv4_address }} ansible_user=root"
         regexp: "^{{ server.hcloud_server.name }} ansible_host="
         create: yes
       delegate_to: localhost

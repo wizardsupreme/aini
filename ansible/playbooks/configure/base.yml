@@ -1,30 +1,48 @@
 ---
 - name: Configure Base System
-  hosts: "{{ target }}_servers"
+  hosts: "{{ target | default('app') }}_servers"
   become: true
   pre_tasks:
     - include_tasks: ../includes/load_vars.yml
 
   tasks:
-    - name: Enable IPv6 in sysctl
-      sysctl:
-        name: "{{ item }}"
-        value: '1'
-        state: present
-        reload: yes
-      loop:
-        - net.ipv6.conf.all.forwarding
-        - net.ipv6.conf.default.forwarding
-
     - name: Update apt cache
       apt:
         update_cache: yes
         cache_valid_time: 3600
 
+    - name: Upgrade all packages
+      apt:
+        upgrade: dist
+        autoclean: yes
+        autoremove: yes
+
+    - name: Install required packages for Docker
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg
+          - lsb-release
+        state: present
+
+    - name: Add Docker GPG key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker repository
+      apt_repository:
+        repo: "deb [arch=arm64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        state: present
+
     - name: Install basic packages
       apt:
         name:
-          - docker.io
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
           - docker-compose
           - python3-pip
           - ufw
@@ -37,14 +55,11 @@
         state: started
         enabled: yes
 
-    - name: Configure Docker daemon for IPv6
+    - name: Configure Docker daemon
       copy:
         content: |
           {
-            "ipv6": true,
-            "fixed-cidr-v6": "2001:db8:1::/64",
-            "experimental": true,
-            "ip6tables": true
+            "experimental": true
           }
         dest: /etc/docker/daemon.json
         mode: '0644'
@@ -56,6 +71,48 @@
         groups: docker
         append: yes
 
+    - name: Configure fail2ban
+      copy:
+        dest: /etc/fail2ban/jail.local
+        content: |
+          [sshd]
+          enabled = true
+          bantime = 3600
+          findtime = 600
+          maxretry = 3
+      notify: Restart fail2ban
+
+    - name: Ensure fail2ban is running
+      systemd:
+        name: fail2ban
+        state: started
+        enabled: yes
+
+    - name: Create swap file
+      command: dd if=/dev/zero of=/swapfile bs=1M count=2048 creates=/swapfile
+      when: ansible_swaptotal_mb < 1
+
+    - name: Set swap file permissions
+      file:
+        path: /swapfile
+        mode: '0600'
+      when: ansible_swaptotal_mb < 1
+
+    - name: Make swap
+      command: mkswap /swapfile
+      when: ansible_swaptotal_mb < 1
+
+    - name: Enable swap
+      command: swapon /swapfile
+      when: ansible_swaptotal_mb < 1
+
+    - name: Add swap to fstab
+      lineinfile:
+        path: /etc/fstab
+        line: '/swapfile none swap sw 0 0'
+        state: present
+      when: ansible_swaptotal_mb < 1
+
     - name: Configure UFW defaults
       ufw:
         direction: "{{ item.direction }}"
@@ -64,26 +121,24 @@
         - { direction: incoming, policy: deny }
         - { direction: outgoing, policy: allow }
 
-    - name: Allow SSH through UFW (IPv4 & IPv6)
+    - name: Rate limit SSH
       ufw:
-        rule: allow
+        rule: limit
         port: 22
         proto: tcp
-        ipv6: yes
+        from_ip: any
 
-    - name: Allow HTTP through UFW (IPv4 & IPv6)
+    - name: Allow HTTP through UFW
       ufw:
         rule: allow
         port: 80
         proto: tcp
-        ipv6: yes
 
-    - name: Allow HTTPS through UFW (IPv4 & IPv6)
+    - name: Allow HTTPS through UFW
       ufw:
         rule: allow
         port: 443
         proto: tcp
-        ipv6: yes
 
     - name: Enable UFW
       ufw:
@@ -93,4 +148,9 @@
     - name: Restart Docker
       systemd:
         name: docker
+        state: restarted
+
+    - name: Restart fail2ban
+      systemd:
+        name: fail2ban
         state: restarted
