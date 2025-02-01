@@ -1,5 +1,6 @@
 # ansible/playbooks/provision/app_servers.yml
 ---
+
 - name: Provision Application Server
   hosts: localhost
   pre_tasks:

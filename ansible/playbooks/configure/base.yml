@@ -2,9 +2,8 @@
 - name: Configure Base System
   hosts: "{{ target }}_servers"
   become: true
-  gather_facts: true
-  vars_files:
-    - "../../vars/secrets.yml"
+  pre_tasks:
+    - include_tasks: ../includes/load_vars.yml
 
   tasks:
     - name: Enable IPv6 in sysctl

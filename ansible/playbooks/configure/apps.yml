@@ -2,9 +2,8 @@
 - name: Configure Applications
   hosts: "{{ target }}_servers"
   become: true
-  gather_facts: true
-  vars_files:
-    - "../../vars/secrets.yml"
+  pre_tasks:
+    - include_tasks: ../includes/load_vars.yml
 
   roles:
     - role: common/traefik

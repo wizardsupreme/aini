@@ -89,7 +89,16 @@ ansible-playbook ansible/playbooks/deploy.yml -e "action=create"
 ansible-playbook ansible/playbooks/deploy.yml -e "action=delete"
 
 # Deploy specific components using tags
-ansible-playbook ansible/playbooks/deploy.yml --tags "servers,storage"
+ansible-playbook ansible/playbooks/deploy.yml --tags "servers,storage,app"
+
+# For app servers
+ansible-playbook deploy.yml -e "action=create" --tags app
+
+# For GPU servers
+ansible-playbook deploy.yml -e "action=create" --tags gpu
+
+# For deletion
+ansible-playbook deploy.yml -e "action=delete" --tags app
 ```
 
 ## Directory Structure

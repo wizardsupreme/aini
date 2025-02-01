@@ -2,9 +2,8 @@
 ---
 - name: Provision GPU Server
   hosts: localhost
-  gather_facts: true
-  vars_files:
-    - "../../vars/secrets.yml"
+  pre_tasks:
+    - include_tasks: ../includes/load_vars.yml
 
   tasks:
     - name: Create server

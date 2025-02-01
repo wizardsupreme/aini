@@ -1,67 +1,55 @@
 ---
-- name: Deploy AINI Infrastructure
+# Initial playbook for variable loading
+- name: Load common configuration
   hosts: localhost
-  gather_facts: false
+  pre_tasks:
+    - include_tasks: includes/load_vars.yml
   vars:
-    env_file: "{{ playbook_dir }}/../../.env"
     target: "{{ target | default('app') }}"
     project_defaults: "{{ playbook_dir }}/../defaults/main.yml"
     action: "{{ action | default('create') }}"  # Can be 'create' or 'delete'
 
-  pre_tasks:
-    - name: Include project defaults
-      include_vars:
-        file: "{{ project_defaults }}"
-      tags: ['always']
+# Import other playbooks
+- import_playbook: provision/ssh_key.yml
+  vars:
+    state: "{{ 'present' if action == 'create' else 'absent' }}"
+  tags: ['provision', 'ssh_key']
 
-    - name: Load environment variables
-      include_role:
-        name: common/env_loader
-      tags: ['always']
+- import_playbook: provision/app_servers.yml
+  vars:
+    state: "{{ 'present' if action == 'create' else 'absent' }}"
+    target: "{{ target | default('app') }}"
+  tags: ['provision', 'servers', 'app']
 
+- import_playbook: provision/gpu_servers.yml
+  vars:
+    state: "{{ 'present' if action == 'create' else 'absent' }}"
+    target: "{{ target | default('gpu') }}"
+  tags: ['provision', 'servers', 'gpu']
+
+# Wait for server playbook
+- name: Wait for server
+  hosts: localhost
   tasks:
-    - name: Configure SSH key
-      ansible.builtin.import_playbook: configure/ssh_key.yml
-      tags: ['infrastructure', 'ssh_key']
-      
-    - name: Configure storage
-      ansible.builtin.import_playbook: configure/storage.yml
-      tags: ['infrastructure', 'storage']
-      
-    - name: Manage application servers
-      ansible.builtin.import_playbook: provision/app_servers.yml
-      vars:
-        state: "{{ 'present' if action == 'create' else 'absent' }}"
-      when: target == 'app'
-      tags: ['infrastructure', 'servers']
-
-    - name: Manage GPU servers
-      ansible.builtin.import_playbook: provision/gpu_servers.yml
-      vars:
-        state: "{{ 'present' if action == 'create' else 'absent' }}"
-      when: target == 'gpu'
-      tags: ['infrastructure', 'servers']
-
     - name: Wait for server to be ready
       wait_for:
         host: "{{ hostvars[groups[target + '_servers'][0]]['ansible_host'] }}"
         port: 22
         timeout: 300
-      tags: ['infrastructure', 'servers']
+      tags: ['infrastructure', 'servers', 'app']
       when: action == 'create'
 
-# Configuration playbooks can be uncommented and customized as needed
-# - name: Configure base system
-#   ansible.builtin.import_playbook: configure/base.yml
-#   when: action == 'create'
-#   tags: ['configure', 'base']
+# onfiguration playbooks
+- import_playbook: configure/base.yml
+  vars:
+    state: "{{ 'present' if action == 'create' else 'absent' }}"
+    target: "{{ target | default('app') }}"
+  tags: ['configure', 'base']
 
-# - name: Configure applications
-#   ansible.builtin.import_playbook: configure/apps.yml
+# - import_playbook: configure/apps.yml
 #   when: action == 'create' and target == 'app'
 #   tags: ['configure', 'apps']
 
-# - name: Configure ML environment
-#   ansible.builtin.import_playbook: configure/ml.yml
+# - import_playbook: configure/ml.yml
 #   when: action == 'create' and target == 'gpu'
 #   tags: ['configure', 'ml']
