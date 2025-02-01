@@ -43,3 +43,11 @@
     project_src: /opt/traefik
     state: present
     pull: yes
+    remove_orphans: true
+    recreate: always
+  register: traefik_output
+
+- name: Debug Traefik deployment
+  debug:
+    var: traefik_output
+  when: traefik_output is defined

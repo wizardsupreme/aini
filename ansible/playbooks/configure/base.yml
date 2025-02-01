@@ -47,6 +47,7 @@
           - python3-pip
           - ufw
           - fail2ban
+          - python3-passlib
         state: present
 
     - name: Start and enable Docker service

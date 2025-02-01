@@ -19,17 +19,45 @@ AINI provides automated deployment of AI and productivity infrastructure using D
 
 ## Prerequisites
 
-- Ansible 2.9 or higher
-- Python 3.6 or higher
-- Hetzner Cloud account
+- Python 3.11 or higher
+- uv (Python package installer)
 - SSH key pair
+- Hetzner Cloud account
 
-## Setup
+## Local Development Setup
 
-1. Install Ansible dependencies:
+1. Install uv:
 ```bash
-ansible-galaxy install -r ansible/requirements.yml
-ansible-galaxy collection install -r ansible/requirements.yml
+# On macOS
+brew install uv
+
+# On Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+2. Create and activate a virtual environment:
+```bash
+# Create a new venv in the project directory
+uv venv
+
+# Activate the virtual environment
+source .venv/bin/activate  # On Unix/macOS
+# or
+.venv\Scripts\activate  # On Windows
+```
+
+3. Install project dependencies:
+```bash
+uv pip install -r requirements.txt
+```
+
+4. Install Ansible dependencies (these will be installed in the project's ansible/roles and ansible/collections directories):
+```bash
+# Install roles to ansible/roles
+ansible-galaxy install -r ansible/requirements.yml --roles-path ansible/roles
+
+# Install collections to ansible/collections
+ansible-galaxy collection install -r ansible/requirements.yml --collections-path ansible/collections
 ```
 
 2. Configure secrets:
@@ -109,11 +137,13 @@ ansible-playbook ansible/playbooks/configure/base.yml
 ```
 aini/
 ├── ansible/
-│   ├── inventory/                # Server inventory
-│   ├── playbooks/               # Playbook files
-│   ├── roles/                   # Ansible roles
-│   └── vars/                    # Variable files
-│       ├── secrets.yml          # Encrypted secrets (do not commit unencrypted)
+│   ├── collections/            # Ansible collections (gitignored)
+│   ├── inventory/             # Server inventory
+│   ├── playbooks/            # Playbook files
+│   ├── roles/                # Ansible roles (gitignored)
+│   │   └── requirements.yml  # Role requirements specification
+│   └── vars/                 # Variable files
+│       ├── secrets.yml       # Encrypted secrets (do not commit unencrypted)
 │       └── secrets.example.yml  # Example secrets file
 ├── docker/                      # Docker configurations
 ├── docs/                        # Documentation
@@ -171,3 +201,99 @@ MIT
 - UFW firewall configured for both IPv4 and IPv6
 - Docker configured with IPv6 support
 - All services accessible via IPv6
+
+## Monitoring and Troubleshooting
+
+### Remote Docker Management
+
+#### Note on docker compose vs docker-compose
+There are two different commands for Docker Compose:
+- `docker compose` (new, recommended, part of Docker CLI)
+- `docker-compose` (legacy standalone binary)
+
+The new `docker compose` command supports contexts natively, while `docker-compose` requires environment variables:
+
+```bash
+# For docker compose (recommended):
+docker --context aini-apps-server compose -f /opt/aini/traefik/docker-compose.yml ps
+
+# For docker-compose (legacy):
+export DOCKER_HOST="ssh://root@your-server-ip"
+docker-compose -f /opt/aini/traefik/docker-compose.yml ps
+```
+
+We recommend using `docker compose` (without hyphen) as it's the newer standard and has better integration with Docker contexts.
+
+You can manage Docker on the remote server directly from your local machine using Docker contexts:
+
+```bash
+# Create a new context
+docker context create aini-apps-server --docker "host=ssh://root@your-server-ip"
+
+# Switch to the context
+docker context use aini-apps-server
+
+# Switch back to local Docker
+docker context use default
+
+# Or use for a single command
+docker --context aini-apps-server ps
+```
+
+### Using docker compose with contexts
+You can create aliases in your shell to make this easier:
+
+```bash
+# Add these to your ~/.bashrc or ~/.zshrc
+alias dps='docker --context aini-apps-server ps'
+alias dc='docker --context aini-apps-server compose -f /opt/aini/traefik/docker-compose.yml'
+
+# Then you can use:
+dc ps
+dc logs
+dc up -d
+```
+
+Or use environment variables:
+```bash
+# Set these before running docker compose commands
+export DOCKER_CONTEXT=aini-apps-server
+export COMPOSE_FILE=/opt/aini/traefik/docker-compose.yml
+
+# Then you can just use:
+docker compose ps
+docker compose logs
+```
+
+### Access Services:
+- Traefik Dashboard: https://traefik.yourdomain.com
+  - Login with credentials from your secrets.yml
+
+### Common Issues
+
+1. Check if ports are properly exposed:
+```bash
+docker --context aini-apps-server port traefik
+```
+
+2. Verify network connectivity:
+```bash
+# Test HTTPS endpoint
+curl -I https://traefik.yourdomain.com
+```
+
+3. View detailed container information:
+```bash
+docker --context aini-apps-server inspect traefik
+```
+
+4. Check container health:
+```bash
+docker --context aini-apps-server ps --format "table {{.Names}}\t{{.Status}}\t{{.Health}}"
+```
+
+### Security Note
+- Ensure your SSH keys are properly configured
+- Keep your Docker contexts secure
+- Never expose Docker daemon ports directly to the internet
+- Always use SSH for remote Docker management

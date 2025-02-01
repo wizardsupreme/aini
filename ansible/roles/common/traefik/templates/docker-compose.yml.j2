@@ -1,0 +1,35 @@
+# ansible/roles/common/traefik/templates/docker-compose.yml.j2
+version: '3.8'
+
+services:
+  traefik:
+    image: traefik:{{ traefik_version }}
+    container_name: traefik
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - traefik-public
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - TZ={{ timezone }}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /opt/traefik/config/traefik.yml:/etc/traefik/traefik.yml:ro
+      - /opt/traefik/config/dynamic:/etc/traefik/dynamic:ro
+      - /opt/traefik/certs:/etc/traefik/certs:rw
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.entrypoints=websecure"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.{{ domain }}`)"
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.routers.traefik.middlewares=secured@file"
+      - "traefik.http.routers.traefik.tls.certresolver=letsencrypt"
+      - "traefik.http.middlewares.traefik-auth.basicauth.users={{ traefik_username }}:{{ traefik_password | password_hash('bcrypt') | replace('$', '$$') }}"
+
+networks:
+  traefik-public:
+    external: true

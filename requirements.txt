@@ -1,5 +1,7 @@
 # Core dependencies
 ansible>=2.12.0
+passlib>=1.7.4
+jmespath>=1.0.0
 python-consul>=1.1.0
 hcloud>=1.11.0
 click>=8.0.0
