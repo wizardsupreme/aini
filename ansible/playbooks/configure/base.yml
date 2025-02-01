@@ -43,7 +43,6 @@
           - docker-ce
           - docker-ce-cli
           - containerd.io
-          - docker-compose
           - python3-pip
           - ufw
           - fail2ban
@@ -144,6 +143,34 @@
     - name: Enable UFW
       ufw:
         state: enabled
+
+    - name: Remove old docker-compose
+      apt:
+        name: docker-compose
+        state: absent
+      become: true
+
+    - name: Add Docker Compose repository
+      apt_repository:
+        repo: "deb [arch=arm64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        state: present
+      become: true
+
+    - name: Install Docker Compose V2
+      apt:
+        name: docker-compose-plugin
+        state: present
+        update_cache: yes
+      become: true
+
+    - name: Verify Docker Compose installation
+      command: docker compose version
+      register: compose_version
+      changed_when: false
+
+    - name: Force remove any stuck containers
+      shell: docker rm -f $(docker ps -aq) || true
+      changed_when: false
 
   handlers:
     - name: Restart Docker

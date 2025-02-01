@@ -27,17 +27,6 @@
     target: "{{ target | default('gpu') }}"
   tags: ['provision', 'servers', 'gpu']
 
-# Wait for server playbook
-# - name: Wait for server
-#   hosts: localhost
-#   tasks:
-#     - name: Wait for server to be ready
-#       wait_for:
-#         host: "[{{ hostvars[groups[target + '_servers'][0]]['ansible_host'] }}]"
-#         port: 22
-#         timeout: 300
-#       tags: ['configure', 'servers', 'app']
-#       when: action == 'create'
 
 # configuration playbooks
 - import_playbook: configure/base.yml
@@ -46,9 +35,9 @@
     target: "{{ target | default('app') }}"
   tags: ['configure', 'base']
 
-# - import_playbook: configure/apps.yml
-#   when: action == 'create' and target == 'app'
-#   tags: ['configure', 'apps']
+- import_playbook: configure/apps.yml
+  when: action == 'create' and target == 'app'
+  tags: ['configure', 'apps']
 
 # - import_playbook: configure/ml.yml
 #   when: action == 'create' and target == 'gpu'

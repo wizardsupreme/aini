@@ -45,13 +45,17 @@ source .venv/bin/activate  # On Unix/macOS
 # or
 .venv\Scripts\activate  # On Windows
 ```
+3. Run the development setup script:
+```bash
+./scripts/setup_dev.sh
+```
 
-3. Install project dependencies:
+4. Install project dependencies:
 ```bash
 uv pip install -r requirements.txt
 ```
 
-4. Install Ansible dependencies (these will be installed in the project's ansible/roles and ansible/collections directories):
+5. Install Ansible dependencies (these will be installed in the project's ansible/roles and ansible/collections directories):
 ```bash
 # Install roles to ansible/roles
 ansible-galaxy install -r ansible/requirements.yml --roles-path ansible/roles
@@ -60,7 +64,7 @@ ansible-galaxy install -r ansible/requirements.yml --roles-path ansible/roles
 ansible-galaxy collection install -r ansible/requirements.yml --collections-path ansible/collections
 ```
 
-2. Configure secrets:
+6. Configure secrets:
 ```bash
 # Copy the example secrets file
 cp ansible/vars/secrets.example.yml ansible/vars/secrets.yml
@@ -73,7 +77,7 @@ chmod 600 .vault_pass
 ansible-vault edit ansible/vars/secrets.yml
 ```
 
-3. Configure required variables in secrets.yml:
+7. Configure required variables in secrets.yml:
    - `hetzner_token`: Your Hetzner Cloud API token
    - `hetzner_ssh_key_name`: Name for your SSH key in Hetzner
    - `project_name`: Your project name (used for server naming)
