@@ -27,19 +27,4 @@ echo "Installing Ansible dependencies..."
 ansible-galaxy install -r ansible/requirements.yml --roles-path .galaxy/roles
 ansible-galaxy collection install -r ansible/requirements.yml --collections-path .galaxy/collections
 
-# Clean up any existing pre-commit setup
-echo "Setting up pre-commit hooks..."
-pre-commit uninstall 2>/dev/null || true
-rm -rf .git/hooks/pre-commit 2>/dev/null || true
-rm -f .secrets.baseline 2>/dev/null || true
-
-# Install and configure pre-commit hooks
-pre-commit install
-
-# Generate initial secrets baseline
-detect-secrets scan > .secrets.baseline
-
-# Update pre-commit hooks to latest versions
-pre-commit autoupdate
-
 echo "Development environment setup complete!"
