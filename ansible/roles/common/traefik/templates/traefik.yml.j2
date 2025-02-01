@@ -102,9 +102,9 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /opt/***REMOVED***/traefik/config/traefik.yml:/etc/traefik/traefik.yml:ro
-      - /opt/***REMOVED***/traefik/config/dynamic:/etc/traefik/dynamic:ro
-      - /opt/***REMOVED***/traefik/certs:/etc/traefik/certs:rw
+      - /opt/aini/traefik/config/traefik.yml:/etc/traefik/traefik.yml:ro
+      - /opt/aini/traefik/config/dynamic:/etc/traefik/dynamic:ro
+      - /opt/aini/traefik/certs:/etc/traefik/certs:rw
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.traefik.entrypoints=websecure"

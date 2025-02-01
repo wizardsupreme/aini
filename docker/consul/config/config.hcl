@@ -32,12 +32,12 @@ snapshot_agent {
   }
 
   aws_storage {
-    access_key_id     = "***REMOVED***"
-    secret_access_key = "***REMOVED***"
+    access_key_id     = "ENEXTCALGCHFO75QMZOO"
+    secret_access_key = "KaRg1N1oHGE49MsXn5HZUA0cFqM21lCGi9G1ED2P"
     s3_region        = "eu-north-1"
-    s3_bucket        = "***REMOVED***"
+    s3_bucket        = "aini"
     s3_key_prefix    = "consul-backups/"
-    s3_endpoint      = "https://***REMOVED***"
+    s3_endpoint      = "https://hel1.your-objectstorage.com"
     enable_s3_server_side_encryption = true
   }
 } 

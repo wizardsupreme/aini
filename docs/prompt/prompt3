@@ -41,7 +41,7 @@ Key configuration files:
 `ansible/defaults/main.yml`:
 ```yaml
 # Project-wide defaults
-project_name: "***REMOVED***"
+project_name: "aini"
 data_dir: "/opt/{{ project_name }}"
 default_location: "fsn1"
 default_image: "ubuntu-22.04"

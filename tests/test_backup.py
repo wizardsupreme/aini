@@ -22,10 +22,10 @@ def test_consul_s3_backup():
     )
     
     bucket = os.getenv('S3_BUCKET')
-    backup_key = '***REMOVED***-consul-backup.json'
+    backup_key = 'aini-consul-backup.json'
     
     # 1. Put test data in Consul
-    test_key = '***REMOVED***/test/backup'
+    test_key = 'aini/test/backup'
     test_value = {
         'timestamp': time.time(),
         'test_data': 'This is a test backup'
@@ -36,7 +36,7 @@ def test_consul_s3_backup():
     
     # 2. Trigger backup
     # Get all KV pairs
-    index, data = c.kv.get('***REMOVED***/', recurse=True)
+    index, data = c.kv.get('aini/', recurse=True)
     if data:
         state = {
             item['Key']: json.loads(item['Value'].decode('utf-8'))

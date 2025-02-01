@@ -9,7 +9,7 @@ services:
       - ./docker/consul:/consul  # Mount the consul directory
       - ./docker/consul/config.hcl.tpl:/consul/config/config.hcl.tpl:ro
     networks:
-      - ***REMOVED***
+      - aini
     ports:
       - "8500:8500"
       - "8600:8600/udp"
@@ -35,7 +35,7 @@ services:
       context: .
     container_name: control
     volumes:
-      - .:/***REMOVED***  # This should include cli/static
+      - .:/aini  # This should include cli/static
       - /var/run/docker.sock:/var/run/docker.sock
       - ${HOME}/.ssh:/root/.ssh:ro
     ports:
@@ -54,13 +54,13 @@ services:
       - AWS_SECRET_ACCESS_KEY=${S3_SECRET_KEY}
       - AWS_DEFAULT_REGION=${S3_REGION}
     networks:
-      - ***REMOVED***
+      - aini
     depends_on:
       - consul
 
 networks:
-  ***REMOVED***:
-    name: ***REMOVED***
+  aini:
+    name: aini
 
 volumes:
   consul_data:

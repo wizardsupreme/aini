@@ -1,6 +1,6 @@
 ---
 # Project-wide defaults
-project_name: "***REMOVED***"
+project_name: "aini"
 data_dir: "/opt/{{ project_name }}"
 default_location: "fsn1"
 default_image: "ubuntu-22.04"
@@ -15,5 +15,5 @@ server_types:
   gpu: "{{ GPU_SERVER_TYPE }}"
 
 # SSH key defaults
-ssh_key_name: "***REMOVED***"
+ssh_key_name: "smn7818@gmail.com"
 ssh_public_key_file: "~/.ssh/id_ed25519.pub"

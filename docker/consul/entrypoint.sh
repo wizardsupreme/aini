@@ -17,7 +17,7 @@ until consul members > /dev/null 2>&1; do
 done
 
 # Store environment variables in Consul KV
-consul kv put ***REMOVED***/config/environment/s3 "{
+consul kv put aini/config/environment/s3 "{
   \"access_key\": \"${S3_ACCESS_KEY}\",
   \"secret_key\": \"${S3_SECRET_KEY}\",
   \"bucket\": \"${S3_BUCKET}\",
@@ -25,13 +25,13 @@ consul kv put ***REMOVED***/config/environment/s3 "{
   \"region\": \"${S3_REGION}\"
 }"
 
-consul kv put ***REMOVED***/config/environment/hcloud "{
+consul kv put aini/config/environment/hcloud "{
   \"token\": \"${HCLOUD_TOKEN}\",
   \"app_server_type\": \"${APP_SERVER_TYPE}\",
   \"gpu_server_type\": \"${GPU_SERVER_TYPE}\"
 }"
 
-consul kv put ***REMOVED***/config/environment/debug "{
+consul kv put aini/config/environment/debug "{
   \"enabled\": \"${DEBUG:-false}\"
 }"
 

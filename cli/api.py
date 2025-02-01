@@ -90,7 +90,7 @@ async def get_status():
 @app.post("/api/start/{server_type}")
 async def start_server(server_type: Literal['app', 'gpu']):
     try:
-        result = subprocess.run(['***REMOVED***', 'start', server_type], 
+        result = subprocess.run(['aini', 'start', server_type], 
                               capture_output=True, 
                               text=True)
         if result.returncode != 0:
@@ -105,7 +105,7 @@ async def start_server(server_type: Literal['app', 'gpu']):
 @app.post("/api/stop/{server_type}")
 async def stop_server(server_type: Literal['app', 'gpu']):
     try:
-        result = subprocess.run(['***REMOVED***', 'stop', server_type], 
+        result = subprocess.run(['aini', 'stop', server_type], 
                               capture_output=True, 
                               text=True)
         if result.returncode != 0:

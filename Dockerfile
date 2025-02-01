@@ -23,11 +23,11 @@ RUN pip install -r /requirements.txt
 COPY ansible/requirements.yml /ansible/
 RUN ansible-galaxy install -r /ansible/requirements.yml
 
-WORKDIR /***REMOVED***
+WORKDIR /aini
 
 # Copy API and configurations
-COPY cli/api.py /***REMOVED***/cli/
-COPY cli/static /***REMOVED***/cli/static
-COPY ansible /***REMOVED***/ansible
+COPY cli/api.py /aini/cli/
+COPY cli/static /aini/cli/static
+COPY ansible /aini/ansible
 
 CMD ["python", "cli/api.py"]

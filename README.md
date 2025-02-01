@@ -71,7 +71,7 @@ ansible-playbook ansible/playbooks/provision/gpu_servers.yml
 ## Directory Structure
 
 ```
-***REMOVED***/
+aini/
 ├── ansible/
 │   ├── inventory/                # Server inventory
 │   ├── playbooks/               # Playbook files

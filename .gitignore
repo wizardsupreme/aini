@@ -1,5 +1,5 @@
 # Local state and data
-.***REMOVED***-state/
+.aini-state/
 consul/data/
 .s3cfg
 
