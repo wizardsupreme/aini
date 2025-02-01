@@ -3,7 +3,7 @@
   hosts: localhost
   gather_facts: false
   vars:
-    env_file: "{{ playbook_dir }}/../.env"
+    env_file: "{{ playbook_dir }}/../../.env"
     target: "{{ target | default('app') }}"
     project_defaults: "{{ playbook_dir }}/../defaults/main.yml"
 
@@ -42,28 +42,28 @@
         timeout: 300
       tags: ['infrastructure', 'servers']
 
-- name: Configure Infrastructure
-  hosts: "{{ target }}_servers"
-  become: true
-  vars:
-    env_file: "{{ playbook_dir }}/../.env"
-    project_defaults: "{{ playbook_dir }}/../defaults/main.yml"
+# - name: Configure Infrastructure
+#   hosts: "{{ target }}_servers"
+#   become: true
+#   vars:
+#     env_file: "{{ playbook_dir }}/../.env"
+#     project_defaults: "{{ playbook_dir }}/../defaults/main.yml"
 
-  pre_tasks:
-    - name: Include project defaults
-      include_vars:
-        file: "{{ project_defaults }}"
-      tags: ['always']
+#   pre_tasks:
+#     - name: Include project defaults
+#       include_vars:
+#         file: "{{ project_defaults }}"
+#       tags: ['always']
     
-    - name: Load environment variables
-      include_role:
-        name: common/env_loader
-      tags: ['always']
+#     - name: Load environment variables
+#       include_role:
+#         name: common/env_loader
+#       tags: ['always']
 
-  roles:
-    - role: common/traefik
-      tags: ['configure', 'traefik']
-    - role: common/consul
-      tags: ['configure', 'consul']
-    - role: common/vault
-      tags: ['configure', 'vault']
+#   roles:
+#     - role: common/traefik
+#       tags: ['configure', 'traefik']
+#     - role: common/consul
+#       tags: ['configure', 'consul']
+#     - role: common/vault
+#       tags: ['configure', 'vault']

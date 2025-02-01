@@ -1,5 +1,0 @@
-# ansible/roles/hetzner/ssh_key/defaults/main.yml
----
-ssh_action: "create"  # Default action
-ssh_key_name: "{{ project_name }}-key"
-ssh_public_key_file: "~/.ssh/id_rsa.pub"

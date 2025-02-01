@@ -1,0 +1,7 @@
+# ansible/roles/common/consul/tasks/main.yml
+---
+- name: Include installation tasks
+  include_tasks: install.yml
+
+- name: Include configuration tasks
+  include_tasks: configure.yml

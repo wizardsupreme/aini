@@ -2,9 +2,23 @@
 ---
 - name: Configure Storage
   hosts: localhost
-  gather_facts: false
+  gather_facts: true
+  vars_files:
+    - "../../vars/secrets.yml"
 
-  roles:
-    - role: hetzner/storage
-      vars:
-        storage_action: create
+  tasks:
+    - name: Create Hetzner Object Storage bucket
+      uri:
+        url: "{{ s3_endpoint }}/{{ s3_bucket }}"
+        method: PUT
+        headers:
+          Authorization: "Bearer {{ hetzner_token }}"
+          Date: "{{ ansible_date_time.iso8601 }}"
+        status_code: [200, 201, 409]  # 409 means bucket already exists
+      when: s3_enabled | bool
+      register: bucket_result
+
+    - name: Show bucket creation result
+      debug:
+        msg: "Bucket {{ s3_bucket }} created successfully"
+      when: bucket_result.status == 201

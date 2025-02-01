@@ -1,0 +1,24 @@
+# ansible/roles/common/consul/tasks/install.yml
+---
+- name: Create Consul directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0750'
+  loop:
+    - "{{ consul_data_dir }}"
+    - "{{ consul_config_dir }}"
+
+- name: Copy Consul configuration
+  template:
+    src: consul.hcl.j2
+    dest: "{{ consul_config_dir }}/consul.hcl"
+    mode: '0640'
+  notify: restart consul
+
+- name: Copy Docker Compose file
+  template:
+    src: docker-compose.yml.j2
+    dest: "{{ consul_config_dir }}/docker-compose.yml"
+    mode: '0640'
+  notify: restart consul

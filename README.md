@@ -14,27 +14,58 @@ AINI provides automated deployment of AI and productivity infrastructure using D
   - Netdata (monitoring)
   - Watchtower (automatic updates)
 
+## Prerequisites
+
+- Ansible 2.9 or higher
+- Python 3.6 or higher
+- Hetzner Cloud account
+- SSH key pair
+
+## Setup
+
+1. Install Ansible dependencies:
+```bash
+ansible-galaxy install -r ansible/requirements.yml
+ansible-galaxy collection install -r ansible/requirements.yml
+```
+
+2. Configure secrets:
+```bash
+# Copy the example secrets file
+cp ansible/vars/secrets.example.yml ansible/vars/secrets.yml
+
+# Create a vault password file (keep this secure and never commit it)
+echo "your-secure-password" > .vault_pass
+chmod 600 .vault_pass
+
+# Edit your secrets
+ansible-vault edit ansible/vars/secrets.yml
+```
+
+3. Configure required variables in secrets.yml:
+   - `hetzner_token`: Your Hetzner Cloud API token
+   - `hetzner_ssh_key_name`: Name for your SSH key in Hetzner
+   - Other configuration variables as needed
+
 ## Quick Start
 
-1. Clone the repository:
+1. Initialize SSH key in Hetzner:
 ```bash
-git clone https://github.com/yourusername/***REMOVED***.git
-cd ***REMOVED***
+ansible-playbook ansible/playbooks/configure/ssh_key.yml
 ```
 
-2. Copy and configure environment variables:
+2. Create S3 storage bucket:
 ```bash
-cp .env.example .env
-# Edit .env with your settings
+ansible-playbook ansible/playbooks/configure/storage.yml
 ```
 
-3. Start the infrastructure:
+3. Provision servers:
 ```bash
-# Initialize Hetzner server
-ansible-playbook ansible/playbooks/operations/init_infrastructure.yml
+# For application servers
+ansible-playbook ansible/playbooks/provision/app_servers.yml
 
-# Deploy application stack
-ansible-playbook ansible/playbooks/configure/apps.yml
+# For GPU servers
+ansible-playbook ansible/playbooks/provision/gpu_servers.yml
 ```
 
 ## Directory Structure
@@ -43,47 +74,23 @@ ansible-playbook ansible/playbooks/configure/apps.yml
 ***REMOVED***/
 ├── ansible/
 │   ├── inventory/                # Server inventory
-│   │   ├── group_vars/          # Group variables
-│   │   │   ├── all.yml
-│   │   │   ├── app_servers.yml
-│   │   │   └── gpu_servers.yml
-│   │   └── hosts.yml
-│   ├── playbooks/
-│   │   ├── configure/           # Service configuration
-│   │   │   ├── apps.yml        # Application stack setup
-│   │   │   ├── base.yml        # Base configuration
-│   │   │   └── ml.yml          # ML stack setup
-│   │   ├── operations/         # Server operations
-│   │   │   ├── backup.yml
-│   │   │   ├── init_infrastructure.yml
-│   │   │   ├── start.yml
-│   │   │   └── stop.yml
-│   │   └── provision/          # Server provisioning
-│   │       ├── app_servers.yml
-│   │       └── gpu_servers.yml
-│   └── roles/                  # Ansible roles
-├── docker/                     # Docker configurations
-│   ├── traefik/               # Traefik configuration
-│   ├── nextcloud/             # Nextcloud configuration
-│   ├── vault/                 # Vault configuration
-│   └── consul/                # Consul configuration
-├── docs/                      # Documentation
-│   ├── architecture.md        # System architecture
-│   └── development.md         # Development guide
-├── tests/                     # Test scripts
-├── scripts/                   # Utility scripts
-├── docker-compose.yml         # Main stack definition
-├── .env.example              # Environment template
-└── README.md                 # This file
+│   ├── playbooks/               # Playbook files
+│   ├── roles/                   # Ansible roles
+│   └── vars/                    # Variable files
+│       ├── secrets.yml          # Encrypted secrets (do not commit unencrypted)
+│       └── secrets.example.yml  # Example secrets file
+├── docker/                      # Docker configurations
+├── docs/                        # Documentation
+├── tests/                       # Test scripts
+├── scripts/                     # Utility scripts
+└── README.md                    # This file
 ```
 
-## Configuration
+## Security
 
-Required environment variables:
-- `HCLOUD_TOKEN`: Hetzner Cloud API token
-- `DOMAIN`: Your domain name
-- `ACME_EMAIL`: Email for Let's Encrypt
-- Service credentials (see .env.example)
+- All sensitive information is encrypted using Ansible Vault
+- Never commit the `.vault_pass` file
+- Keep your vault password secure
 
 ## Development
 
@@ -93,10 +100,7 @@ pip install -r requirements.txt
 ansible-galaxy install -r ansible/requirements.yml
 ```
 
-2. Run tests:
-```bash
-pytest tests/
-```
+2. Set up your secrets as described in the Setup section
 
 ## Documentation
 

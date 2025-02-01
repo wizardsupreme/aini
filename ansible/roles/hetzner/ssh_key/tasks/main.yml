@@ -1,9 +1,0 @@
-# ansible/roles/hetzner/ssh_key/tasks/main.yml
----
-- name: Include create tasks
-  include_tasks: create.yml
-  when: ssh_action | default('create') == 'create'
-
-- name: Include delete tasks
-  include_tasks: delete.yml
-  when: ssh_action | default('create') == 'delete'

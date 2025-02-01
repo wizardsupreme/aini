@@ -13,3 +13,7 @@ credentials_file: ".env.s3"
 server_types:
   app: "{{ APP_SERVER_TYPE }}"
   gpu: "{{ GPU_SERVER_TYPE }}"
+
+# SSH key defaults
+ssh_key_name: "***REMOVED***"
+ssh_public_key_file: "~/.ssh/id_ed25519.pub"

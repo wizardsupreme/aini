@@ -43,16 +43,3 @@
     project_src: /opt/***REMOVED***/traefik
     state: present
     pull: yes
-
-# ansible/roles/common/traefik/defaults/main.yml
----
-traefik_version: "v2.10"
-traefik_debug: false
-timezone: "UTC"
-domain: "{{ lookup('env', 'DOMAIN') }}"
-acme_email: "{{ lookup('env', 'ACME_EMAIL') }}"
-traefik_username: "{{ lookup('env', 'TRAEFIK_USER') }}"
-traefik_password_hash: "{{ lookup('env', 'TRAEFIK_PASSWORD') | password_hash('bcrypt') }}"
-
-# ansible/roles/common/traefik/templates/docker-compose.yml.j2
-# Same content as before...

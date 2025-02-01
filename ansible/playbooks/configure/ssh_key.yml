@@ -2,9 +2,23 @@
 ---
 - name: Configure SSH Keys
   hosts: localhost
-  gather_facts: false
+  gather_facts: true
+  vars_files:
+    - "../../vars/secrets.yml"
 
-  roles:
-    - role: hetzner/ssh_key
-      vars:
-        ssh_action: create
+  tasks:
+    - name: Debug environment variables
+      debug:
+        msg: "{{ ansible_env }}"
+
+    - name: Read SSH public key
+      ansible.builtin.slurp:
+        src: "~/.ssh/id_ed25519.pub"
+      register: ssh_key_content
+
+    - name: Create SSH key in Hetzner
+      hcloud_ssh_key:
+        api_token: "{{ hetzner_token }}"
+        name: "{{ hetzner_ssh_key_name }}"
+        public_key: "{{ ssh_key_content.content | b64decode }}"
+        state: present

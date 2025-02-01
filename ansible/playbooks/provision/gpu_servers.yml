@@ -2,9 +2,25 @@
 ---
 - name: Provision GPU Server
   hosts: localhost
-  gather_facts: false
+  gather_facts: true
+  vars_files:
+    - "../../vars/secrets.yml"
 
-  roles:
-    - role: hetzner/server
-      vars:
-        server_action: create
+  tasks:
+    - name: Create server
+      hcloud_server:
+        api_token: "{{ hetzner_token }}"
+        name: "{{ project_name }}-gpu"
+        server_type: "{{ gpu_server_type }}"
+        image: "ubuntu-22.04"
+        location: "fsn1"
+        ssh_keys:
+          - "{{ hetzner_ssh_key_name }}"
+        state: present
+      register: server
+
+    - name: Add host to inventory
+      add_host:
+        name: "{{ server.hcloud_server.name }}"
+        ansible_host: "{{ server.hcloud_server.ipv4_address }}"
+        groups: gpu_servers
