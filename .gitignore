@@ -36,3 +36,4 @@ Thumbs.db
 # Ansible
 .vault_pass
 ansible/galaxy/*
+

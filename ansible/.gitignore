@@ -1,4 +1,0 @@
-# Ansible Galaxy installed roles and collections
-galaxy_roles/*
-collections/*
-.vault_pass
