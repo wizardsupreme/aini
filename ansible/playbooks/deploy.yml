@@ -19,7 +19,7 @@
   vars:
     state: "{{ 'present' if action == 'create' else 'absent' }}"
     target: "{{ target | default('app') }}"
-  tags: ['provision', 'servers', 'app']
+  tags: ['provision', 'servers', 'apps-servers']
 
 - import_playbook: provision/gpu_servers.yml
   vars:

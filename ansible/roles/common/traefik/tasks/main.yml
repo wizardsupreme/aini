@@ -39,10 +39,10 @@
     driver: bridge
 
 - name: Start Traefik
-  community.docker.docker_compose:
+  community.docker.docker_compose_v2:
     project_src: /opt/traefik
     state: present
-    pull: yes
+    pull: "missing"
     remove_orphans: true
     recreate: always
   register: traefik_output

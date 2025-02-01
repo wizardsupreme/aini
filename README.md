@@ -45,17 +45,13 @@ source .venv/bin/activate  # On Unix/macOS
 # or
 .venv\Scripts\activate  # On Windows
 ```
-3. Run the development setup script:
-```bash
-./scripts/setup_dev.sh
-```
 
-4. Install project dependencies:
+3. Install project dependencies:
 ```bash
 uv pip install -r requirements.txt
 ```
 
-5. Install Ansible dependencies (these will be installed in the project's ansible/roles and ansible/collections directories):
+4. Install Ansible dependencies (these will be installed in the project's ansible/roles and ansible/collections directories):
 ```bash
 # Install roles to ansible/roles
 ansible-galaxy install -r ansible/requirements.yml --roles-path ansible/roles
@@ -64,7 +60,7 @@ ansible-galaxy install -r ansible/requirements.yml --roles-path ansible/roles
 ansible-galaxy collection install -r ansible/requirements.yml --collections-path ansible/collections
 ```
 
-6. Configure secrets:
+5. Configure secrets:
 ```bash
 # Copy the example secrets file
 cp ansible/vars/secrets.example.yml ansible/vars/secrets.yml
@@ -77,7 +73,7 @@ chmod 600 .vault_pass
 ansible-vault edit ansible/vars/secrets.yml
 ```
 
-7. Configure required variables in secrets.yml:
+6. Configure required variables in secrets.yml:
    - `hetzner_token`: Your Hetzner Cloud API token
    - `hetzner_ssh_key_name`: Name for your SSH key in Hetzner
    - `project_name`: Your project name (used for server naming)
@@ -95,6 +91,7 @@ ansible-playbook ansible/playbooks/configure/ssh_key.yml
 ```
 
 2. Create S3 storage bucket:
+this doesnt currently work as we are using hetzner storage which doesnt seem to work with api calls.
 ```bash
 ansible-playbook ansible/playbooks/configure/storage.yml
 ```
@@ -124,13 +121,13 @@ ansible-playbook ansible/playbooks/deploy.yml -e "action=delete"
 ansible-playbook ansible/playbooks/deploy.yml --tags "servers,storage,app"
 
 # For app servers
-ansible-playbook deploy.yml -e "action=create" --tags app
+ansible-playbook ansible/playbooks/deploy.yml -e "action=create" --tags app
 
 # For GPU servers
-ansible-playbook deploy.yml -e "action=create" --tags gpu
+ansible-playbook ansible/playbooks/deploy.yml -e "action=create" --tags gpu
 
 # For deletion
-ansible-playbook deploy.yml -e "action=delete" --tags app
+ansible-playbook ansible/playbooks/deploy.yml -e "action=delete" --tags app
 
 # For base configuration
 ansible-playbook ansible/playbooks/configure/base.yml
