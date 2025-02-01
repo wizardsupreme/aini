@@ -2,11 +2,10 @@
 ---
 - name: Provision Application Server
   hosts: localhost
-  gather_facts: true
-  vars_files:
-    - "../../vars/secrets.yml"
+  pre_tasks:
+    - include_tasks: ../includes/load_vars.yml
   vars:
-    state: "present"  # Can be 'present' or 'absent'
+    state: "{{ state | default('present') }}"
 
   tasks:
     - name: Manage server
@@ -14,25 +13,28 @@
         api_token: "{{ hetzner_token }}"
         name: "{{ project_name }}-app"
         server_type: "{{ app_server_type }}"
-        image: "ubuntu-22.04"
-        location: "fsn1"
+        image: "{{ server_image }}"
+        location: "{{ server_location }}"
         ssh_keys:
           - "{{ hetzner_ssh_key_name }}"
         state: "{{ state }}"
+        enable_ipv4: false
+        enable_ipv6: true
       register: server
 
     # Only run these tasks when creating the server
     - name: Add host to inventory
       add_host:
         name: "{{ server.hcloud_server.name }}"
-        ansible_host: "{{ server.hcloud_server.ipv4_address }}"
+        ansible_host: "{{ server.hcloud_server.ipv6_address | regex_replace('/.*$','') }}"
+        ansible_python_interpreter: /usr/bin/python3
         groups: app_servers
       when: state == "present"
 
     - name: Update inventory file
       lineinfile:
         path: "../../inventory/hosts"
-        line: "{{ server.hcloud_server.name }} ansible_host={{ server.hcloud_server.ipv4_address }}"
+        line: "{{ server.hcloud_server.name }} ansible_host={{ server.hcloud_server.ipv6_address | regex_replace('/.*$','') }} ansible_python_interpreter=/usr/bin/python3"
         regexp: "^{{ server.hcloud_server.name }} ansible_host="
         create: yes
       delegate_to: localhost

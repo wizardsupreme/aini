@@ -1,4 +1,3 @@
----
 # Project Configuration
 project_name: "aini"  # Override in secrets.yml
 app_server_type: "cx11"
@@ -25,11 +24,6 @@ default_image: "ubuntu-22.04"
 # Storage defaults
 storage_location: "eu-central"
 credentials_file: ".env.s3"
-
-# Server type mappings
-server_types:
-  app: "{{ APP_SERVER_TYPE }}"
-  gpu: "{{ GPU_SERVER_TYPE }}"
 
 # SSH key defaults
 ssh_key_name: "smn7818@gmail.com"

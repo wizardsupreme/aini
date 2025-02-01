@@ -1,0 +1,10 @@
+- name: Load common variables
+  include_vars:
+    dir: "{{ item }}"
+    extensions: 
+      - yml
+      - yaml
+  with_items:
+    - "../../defaults"
+    - "../../vars/common"
+    - "../../vars/{{ lookup('env', 'DEPLOY_ENV') | default('development') }}"

@@ -6,6 +6,7 @@
     env_file: "{{ playbook_dir }}/../../.env"
     target: "{{ target | default('app') }}"
     project_defaults: "{{ playbook_dir }}/../defaults/main.yml"
+    action: "{{ action | default('create') }}"  # Can be 'create' or 'delete'
 
   pre_tasks:
     - name: Include project defaults
@@ -13,57 +14,54 @@
         file: "{{ project_defaults }}"
       tags: ['always']
 
-  roles:
-    # Load environment variables
-    - role: common/env_loader
+    - name: Load environment variables
+      include_role:
+        name: common/env_loader
       tags: ['always']
 
-    # Setup infrastructure
-    - role: hetzner/ssh_key
-      vars:
-        ssh_action: create
+  tasks:
+    - name: Configure SSH key
+      ansible.builtin.import_playbook: configure/ssh_key.yml
       tags: ['infrastructure', 'ssh_key']
       
-    - role: hetzner/storage
-      vars:
-        storage_action: create
+    - name: Configure storage
+      ansible.builtin.import_playbook: configure/storage.yml
       tags: ['infrastructure', 'storage']
       
-    - role: hetzner/server
+    - name: Manage application servers
+      ansible.builtin.import_playbook: provision/app_servers.yml
       vars:
-        server_action: create
+        state: "{{ 'present' if action == 'create' else 'absent' }}"
+      when: target == 'app'
       tags: ['infrastructure', 'servers']
 
-  post_tasks:
+    - name: Manage GPU servers
+      ansible.builtin.import_playbook: provision/gpu_servers.yml
+      vars:
+        state: "{{ 'present' if action == 'create' else 'absent' }}"
+      when: target == 'gpu'
+      tags: ['infrastructure', 'servers']
+
     - name: Wait for server to be ready
       wait_for:
         host: "{{ hostvars[groups[target + '_servers'][0]]['ansible_host'] }}"
         port: 22
         timeout: 300
       tags: ['infrastructure', 'servers']
+      when: action == 'create'
 
-# - name: Configure Infrastructure
-#   hosts: "{{ target }}_servers"
-#   become: true
-#   vars:
-#     env_file: "{{ playbook_dir }}/../.env"
-#     project_defaults: "{{ playbook_dir }}/../defaults/main.yml"
+# Configuration playbooks can be uncommented and customized as needed
+# - name: Configure base system
+#   ansible.builtin.import_playbook: configure/base.yml
+#   when: action == 'create'
+#   tags: ['configure', 'base']
 
-#   pre_tasks:
-#     - name: Include project defaults
-#       include_vars:
-#         file: "{{ project_defaults }}"
-#       tags: ['always']
-    
-#     - name: Load environment variables
-#       include_role:
-#         name: common/env_loader
-#       tags: ['always']
+# - name: Configure applications
+#   ansible.builtin.import_playbook: configure/apps.yml
+#   when: action == 'create' and target == 'app'
+#   tags: ['configure', 'apps']
 
-#   roles:
-#     - role: common/traefik
-#       tags: ['configure', 'traefik']
-#     - role: common/consul
-#       tags: ['configure', 'consul']
-#     - role: common/vault
-#       tags: ['configure', 'vault']
+# - name: Configure ML environment
+#   ansible.builtin.import_playbook: configure/ml.yml
+#   when: action == 'create' and target == 'gpu'
+#   tags: ['configure', 'ml']

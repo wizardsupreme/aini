@@ -1,0 +1,11 @@
+---
+- name: Configure Applications
+  hosts: "{{ target }}_servers"
+  become: true
+  gather_facts: true
+  vars_files:
+    - "../../vars/secrets.yml"
+
+  roles:
+    - role: common/traefik
+      tags: ['configure', 'traefik']

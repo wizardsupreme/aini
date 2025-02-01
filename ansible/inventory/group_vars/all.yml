@@ -20,3 +20,11 @@ consul_encrypt_key: "{{ vault_consul_encrypt_key }}"  # Generate with consul key
 consul_acl_tokens:
   master: "{{ vault_consul_master_token }}"
   agent: "{{ vault_consul_agent_token }}"
+
+  gather_facts: true
+  vars_files:
+    - "{{ lookup('fileglob', '../../defaults/*.yml', wantlist=True) }}"
+    - "{{ lookup('fileglob', '../../vars/common/*.yml', wantlist=True) }}"
+    - "{{ lookup('fileglob', '../../vars/{{ lookup('env', 'DEPLOY_ENV') | default('development') }}/*.yml', wantlist=True) }}"
+  vars:
+    state: "{{ state | default('present') }}"

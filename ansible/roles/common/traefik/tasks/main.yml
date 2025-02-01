@@ -6,21 +6,21 @@
     state: directory
     mode: '0755'
   loop:
-    - /opt/aini/traefik
-    - /opt/aini/traefik/config
-    - /opt/aini/traefik/config/dynamic
-    - /opt/aini/traefik/certs
+    - /opt/traefik
+    - /opt/traefik/config
+    - /opt/traefik/config/dynamic
+    - /opt/traefik/certs
 
 - name: Template docker-compose.yml
   template:
     src: docker-compose.yml.j2
-    dest: /opt/aini/traefik/docker-compose.yml
+    dest: /opt/traefik/docker-compose.yml
     mode: '0644'
 
 - name: Template Traefik configuration
   template:
     src: "{{ item.src }}"
-    dest: "/opt/aini/traefik/config/{{ item.dest }}"
+    dest: "/opt/traefik/config/{{ item.dest }}"
     mode: '0644'
   loop:
     - { src: traefik.yml.j2, dest: traefik.yml }
@@ -29,7 +29,7 @@
 
 - name: Create acme.json
   file:
-    path: /opt/aini/traefik/certs/acme.json
+    path: /opt/traefik/certs/acme.json
     state: touch
     mode: '0600'
 
@@ -40,6 +40,6 @@
 
 - name: Start Traefik
   community.docker.docker_compose:
-    project_src: /opt/aini/traefik
+    project_src: /opt/traefik
     state: present
     pull: yes

@@ -5,6 +5,9 @@ AINI provides automated deployment of AI and productivity infrastructure using D
 ## Features
 
 - Automated server provisioning on Hetzner Cloud
+- IPv6-first networking
+- Automatic UFW firewall configuration
+- Docker with IPv6 support
 - Complete application stack:
   - Traefik (reverse proxy + SSL)
   - LibreChat (AI frontend)
@@ -45,6 +48,11 @@ ansible-vault edit ansible/vars/secrets.yml
 3. Configure required variables in secrets.yml:
    - `hetzner_token`: Your Hetzner Cloud API token
    - `hetzner_ssh_key_name`: Name for your SSH key in Hetzner
+   - `project_name`: Your project name (used for server naming)
+   - `app_server_type`: Hetzner server type (e.g., "cx11")
+   - Optional variables:
+     - `server_image`: Server OS image (default: "ubuntu-24.04")
+     - `server_location`: Hetzner datacenter location (default: "fsn1")
    - Other configuration variables as needed
 
 ## Quick Start
@@ -59,13 +67,29 @@ ansible-playbook ansible/playbooks/configure/ssh_key.yml
 ansible-playbook ansible/playbooks/configure/storage.yml
 ```
 
-3. Provision servers:
+3. Manage servers:
 ```bash
-# For application servers
-ansible-playbook ansible/playbooks/provision/app_servers.yml
+# Create application servers
+ansible-playbook ansible/playbooks/provision/app_servers.yml -e "state=present"
 
-# For GPU servers
-ansible-playbook ansible/playbooks/provision/gpu_servers.yml
+# Configure base system and applications
+ansible-playbook ansible/playbooks/configure/base.yml
+ansible-playbook ansible/playbooks/configure/apps.yml
+
+# Delete application servers
+ansible-playbook ansible/playbooks/provision/app_servers.yml -e "state=absent"
+```
+
+4. Or use the deploy playbook for full infrastructure management:
+```bash
+# Create all infrastructure
+ansible-playbook ansible/playbooks/deploy.yml -e "action=create"
+
+# Delete all infrastructure
+ansible-playbook ansible/playbooks/deploy.yml -e "action=delete"
+
+# Deploy specific components using tags
+ansible-playbook ansible/playbooks/deploy.yml --tags "servers,storage"
 ```
 
 ## Directory Structure
@@ -110,3 +134,28 @@ ansible-galaxy install -r ansible/requirements.yml
 ## License
 
 MIT
+
+## Infrastructure Management
+
+### Server Management
+- Servers can be created and deleted using the provision playbooks
+- Use the `state` variable to control server lifecycle:
+  - `present`: Creates the server
+  - `absent`: Deletes the server
+- Server information is automatically managed in the inventory
+- Servers are configured with IPv6 by default
+- The inventory uses IPv6 addresses for connectivity
+
+### Available Tags
+- `infrastructure`: All infrastructure tasks
+- `ssh_key`: SSH key management
+- `storage`: Storage management
+- `servers`: Server management
+- `configure`: Configuration tasks
+- `always`: Tasks that run regardless of tags
+
+### Networking
+- Primary connectivity is via IPv6
+- UFW firewall configured for both IPv4 and IPv6
+- Docker configured with IPv6 support
+- All services accessible via IPv6
