@@ -1,0 +1,35 @@
+# tasks/inventory.yml
+---
+- name: Ensure app_servers group exists in inventory
+  lineinfile:
+    path: "{{ playbook_dir }}/../inventory/hosts"
+    line: "[app_servers]"
+    insertbefore: BOF
+    create: yes
+  delegate_to: localhost
+  when: state == "present"
+  
+- name: Add host to inventory (for in-memory inventory)
+  add_host:
+    name: "{{ server_name }}"
+    ansible_host: "{{ ipv4_address }}"
+    ansible_python_interpreter: /usr/bin/python3
+    groups: app_servers
+  when: state == "present"
+
+- name: Update inventory file (for permanent inventory)
+  lineinfile:
+    path: "{{ playbook_dir }}/../inventory/hosts"
+    line: "{{ server_name }} ansible_host={{ ipv4_address }} ansible_user=root"
+    regexp: "^{{ server_name }} ansible_host="
+    create: yes
+  delegate_to: localhost
+  when: state == "present"
+
+- name: Remove from inventory file
+  lineinfile:
+    path: "{{ playbook_dir }}/../inventory/hosts"
+    regexp: "^{{ hetzner_project_name }}-app ansible_host="
+    state: absent
+  delegate_to: localhost
+  when: state == "absent"

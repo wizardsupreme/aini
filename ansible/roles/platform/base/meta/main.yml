@@ -1,0 +1,15 @@
+# Path: ansible/roles/platform/base/meta/main.yml
+# Purpose: Role metadata for Ansible Galaxy and dependency management
+---
+galaxy_info:
+  author: Your Name
+  description: Base system configuration including Docker, security, and system updates
+  license: MIT
+  min_ansible_version: "2.9"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - focal
+        - jammy
+
+dependencies: []

@@ -1,0 +1,17 @@
+---
+- name: Deploy Traefik
+  include_role:
+    name: apps/traefik
+  tags: ['traefik']
+
+# - name: Deploy Consul
+#   include_role:
+#     name: apps/consul
+#   tags: ['consul']
+
+# - name: Deploy N8N
+#   include_role:
+#     name: apps/n8n
+#   tags: ['n8n']
+
+# Add more CPU-specific apps here

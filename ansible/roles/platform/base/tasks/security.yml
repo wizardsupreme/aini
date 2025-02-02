@@ -1,0 +1,40 @@
+---
+- name: Configure fail2ban
+  copy:
+    dest: /etc/fail2ban/jail.local
+    content: |
+      [sshd]
+      enabled = true
+      bantime = 3600
+      findtime = 600
+      maxretry = 3
+  notify: Restart fail2ban
+
+- name: Ensure fail2ban is running
+  systemd:
+    name: fail2ban
+    state: started
+    enabled: yes
+
+- name: Configure UFW defaults
+  ufw:
+    direction: "{{ item.direction }}"
+    policy: "{{ item.policy }}"
+  loop:
+    - { direction: incoming, policy: deny }
+    - { direction: outgoing, policy: allow }
+
+- name: Configure UFW rules
+  ufw:
+    rule: "{{ item.rule }}"
+    port: "{{ item.port }}"
+    proto: "{{ item.proto }}"
+    from_ip: "{{ item.from_ip | default(omit) }}"
+  loop:
+    - { rule: limit, port: 22, proto: tcp, from_ip: any }
+    - { rule: allow, port: 80, proto: tcp }
+    - { rule: allow, port: 443, proto: tcp }
+
+- name: Enable UFW
+  ufw:
+    state: enabled

@@ -1,0 +1,16 @@
+---
+# Hetzner configuration
+hetzner_token: ""  # For Cloud API
+hetzner_dns_token: ""  # For DNS API
+hetzner_ssh_key_name: "{{ project_name }}-key"
+
+# Server configuration
+hetzner_server_type: "cax11"
+hetzner_server_image: "ubuntu-24.04"
+hetzner_server_location: "hel1"
+hetzner_enable_ipv4: true
+hetzner_enable_ipv6: false
+inventory_group: "app_servers"
+
+# State management
+state: "present"  # Back to standard state variable

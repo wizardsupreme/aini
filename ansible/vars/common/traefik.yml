@@ -1,2 +1,5 @@
+# Traefik Configuration
+traefik_enabled: true
+
 domain: "yaml.space"
 acme_email: "developerinloddonn@gmail.com"

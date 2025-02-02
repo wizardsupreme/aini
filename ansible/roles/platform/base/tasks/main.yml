@@ -1,0 +1,22 @@
+---
+- name: Install basic packages
+  apt:
+    name:
+      - python3-pip
+      - ufw
+      - fail2ban
+      - python3-passlib
+    state: present
+
+- name: Update and upgrade system
+  import_tasks: system_update.yml
+
+- name: Setup Docker
+  import_tasks: docker.yml
+
+- name: Setup swap
+  import_tasks: swap.yml
+  when: ansible_swaptotal_mb < 1
+
+- name: Setup Security
+  import_tasks: security.yml

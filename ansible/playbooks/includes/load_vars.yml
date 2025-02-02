@@ -1,3 +1,12 @@
+---
+# Set default environment and debug paths
+- name: Set default environment and debug paths
+  set_fact:
+    deploy_env: "{{ lookup('env', 'DEPLOY_ENV') | default('dev2') }}"
+  register: env_debug
+  tags: ['always']
+
+# Load variables
 - name: Load common variables
   include_vars:
     dir: "{{ item }}"
@@ -6,6 +15,8 @@
       - yaml
     files_matching: "^.*\\.(yml|yaml)$"
   with_items:
-    - "../../defaults"
-    - "../../vars/common"
-    - "../../vars/{{ lookup('env', 'DEPLOY_ENV') | default('dev2') }}"
+    - "{{ playbook_dir }}/../defaults"
+    - "{{ playbook_dir }}/../vars/common"
+    - "{{ playbook_dir }}/../vars/{{ deploy_env }}"
+  tags: ['always']
+

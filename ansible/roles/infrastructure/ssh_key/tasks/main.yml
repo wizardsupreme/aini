@@ -1,0 +1,12 @@
+---
+- name: Read SSH public key
+  ansible.builtin.slurp:
+    src: "{{ ssh_key_path }}"
+  register: ssh_key_content
+
+- name: Create SSH key in Hetzner
+  hcloud_ssh_key:
+    api_token: "{{ hetzner_token }}"
+    name: "{{ hetzner_ssh_key_name }}"
+    public_key: "{{ ssh_key_content.content | b64decode }}"
+    state: present

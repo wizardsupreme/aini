@@ -24,6 +24,30 @@ AINI provides automated deployment of AI and productivity infrastructure using D
 - SSH key pair
 - Hetzner Cloud account
 
+## Directory Structure
+ansible/
+├── playbooks/
+│   ├── deploy.yml               # Main entry point
+│   └── includes/
+│       ├── load_vars.yml       # Keep existing
+│       ├── common_apps.yml     # Common apps for both types
+│       ├── cpu_apps.yml        # CPU-server specific apps
+│       └── gpu_apps.yml        # GPU-server specific apps
+│
+├── roles/
+│   ├── provision/
+│   │   ├── common/            # SSH keys etc
+│   │   ├── cpu_servers/       # CPU server provisioning
+│   │   └── gpu_servers/       # GPU server provisioning
+│   │
+│   ├── configure/
+│   │   └── base/             # Base configuration
+│   │
+│   └── apps/                 # Individual app roles
+│       ├── traefik/
+│       ├── consul/
+│       └── ... other apps
+
 ## Local Development Setup
 
 1. Install uv:

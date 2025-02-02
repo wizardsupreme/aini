@@ -1,30 +1,20 @@
-# Project Configuration
-project_name: "aini"  # Override in secrets.yml
-app_server_type: "cax11"
-server_image: "ubuntu-24.04"
-server_location: "fsn1"
+# SSH Configuration
+ssh_public_key_file: "~/.ssh/id_ed25519.pub"
+ssh_private_key_file: "~/.ssh/id_ed25519"
 
-# Network Configuration
-enable_ipv6: true
-enable_ipv4: true
+# Hetzner Configuration
+hetzner_ssh_key_name: "smn7818@gmail.com"
+hetzner_server_type: "cax11"
+hetzner_server_image: "ubuntu-24.04"
+hetzner_server_location: "hel1"
+hetzner_enable_ipv6: true
+hetzner_enable_ipv4: true
+hetzner_project_name: "aini"
 
+hetzner_use_root_domain: true
 # Storage Configuration
 s3_enabled: true
 s3_region: "eu-north-1"
 s3_endpoint: "https://hel1.your-objectstorage.com"
-
-# Application Configuration
-traefik_enabled: true
-
-# Project-wide defaults
-data_dir: "/opt/{{ project_name }}"
-default_location: "fsn1"
-default_image: "ubuntu-24.04"
-
-# Storage defaults
 storage_location: "eu-central"
 credentials_file: ".env.s3"
-
-# SSH key defaults
-ssh_key_name: "smn7818@gmail.com"
-ssh_public_key_file: "~/.ssh/id_ed25519.pub"

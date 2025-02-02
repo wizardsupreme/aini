@@ -1,0 +1,123 @@
+# tasks/dns.yml
+---
+- name: Verify DNS token is available
+  assert:
+    that:
+      - hetzner_dns_token is defined
+      - hetzner_dns_token | length > 0
+    fail_msg: "hetzner_dns_token is required for DNS management"
+  when: state == "present"
+
+- name: Verify IP Address is available
+  assert:
+    that:
+      - ipv4_address is defined
+      - ipv4_address | length > 0
+    fail_msg: "ipv4_address is required for DNS management"
+  when: state == "present"
+
+- name: Get DNS zone ID
+  uri:
+    url: "https://dns.hetzner.com/api/v1/zones"
+    method: GET
+    headers:
+      Auth-API-Token: "{{ hetzner_dns_token }}"
+  register: zones_response
+  when: state == "present"
+
+- name: Set zone_id fact
+  set_fact:
+    zone_id: "{{ zones_response.json.zones | json_query(query) }}"
+  vars:
+    query: "[?name==`{{ hetzner_dns_zone }}`].id | [0]"
+  when: state == "present"
+
+- name: Get existing DNS records
+  uri:
+    url: "https://dns.hetzner.com/api/v1/records"
+    method: GET
+    headers:
+      Auth-API-Token: "{{ hetzner_dns_token }}"
+  register: existing_records
+  when: state == "present"
+
+- name: Set DNS names
+  set_fact:
+    root_name: "{% if hetzner_use_root_domain %}@{% else %}{{ hetzner_dns_name }}{% endif %}"
+    wildcard_name: "{% if hetzner_use_root_domain %}*{% else %}*.{{ hetzner_dns_name }}{% endif %}"
+  when: state == "present"
+
+- name: Check if records exist
+  set_fact:
+    dns_records: >-
+      {
+        'root': "{{ existing_records.json.records | json_query(query_template | format(root_name)) | length > 0 }}",
+        'wildcard': "{{ existing_records.json.records | json_query(query_template | format(wildcard_name)) | length > 0 }}"
+      }
+  vars:
+    query_template: "[?zone_id=='{{ zone_id }}' && type=='A' && name=='%s' && value=='{{ ipv4_address }}']"
+  when: state == "present"
+
+- name: Debug DNS records check
+  debug:
+    msg:
+      - "DNS Records: {{ dns_records }}"
+      - "Root exists: {{ dns_records['root'] }}"
+      - "Wildcard exists: {{ dns_records['wildcard'] }}"
+      - "Root name: {{ root_name }}"
+      - "Wildcard name: {{ wildcard_name }}"
+      - "Zone ID: {{ zone_id }}"
+      - "Existing records: {{ existing_records.json.records }}"
+  when: state == "present"
+
+- name: Manage DNS records
+  uri:
+    url: "https://dns.hetzner.com/api/v1/records"
+    method: POST
+    headers:
+      Auth-API-Token: "{{ hetzner_dns_token }}"
+      Content-Type: "application/json"
+    body_format: json
+    body:
+      zone_id: "{{ zone_id }}"
+      name: "{{ item.value }}"
+      type: "A"
+      value: "{{ ipv4_address }}"
+      ttl: 300
+  register: dns_result
+  retries: 3
+  delay: 5
+  until: dns_result is success
+  loop:
+    - key: root
+      value: "{{ root_name }}"
+    - key: wildcard
+      value: "{{ wildcard_name }}"
+  when: 
+    - state == "present"
+    - not (dns_records[item.key] | bool)
+
+- name: Get record IDs for deletion
+  uri:
+    url: "https://dns.hetzner.com/api/v1/records"
+    method: GET
+    headers:
+      Auth-API-Token: "{{ hetzner_dns_token }}"
+  register: records_response
+  when: state == "absent"
+
+- name: Delete DNS records
+  uri:
+    url: "https://dns.hetzner.com/api/v1/records/{{ record_id }}"
+    method: DELETE
+    headers:
+      Auth-API-Token: "{{ hetzner_dns_token }}"
+  vars:
+    record_id: "{{ records_response.json.records | json_query(query_template | format(item.value)) | first }}"
+    query_template: "[?zone_id=='{{ zone_id }}' && name=='%s'].id | [0]"
+  loop:
+    - key: root
+      value: "{{ root_name }}"
+    - key: wildcard
+      value: "{{ wildcard_name }}"
+  when: state == "absent"

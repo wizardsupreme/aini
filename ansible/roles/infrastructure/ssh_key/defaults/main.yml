@@ -1,0 +1,4 @@
+---
+hetzner_ssh_key_name: "{{ project_name }}-key"
+hetzner_token: "{{ hetzner_token }}"
+ssh_key_path: "~/.ssh/id_ed25519.pub"

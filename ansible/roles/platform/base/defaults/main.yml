@@ -1,0 +1,14 @@
+# Path: ansible/roles/platform/base/defaults/main.yml
+# Purpose: Default variables that can be overridden by playbooks or inventory
+---
+# Docker configuration
+docker_experimental: true
+docker_compose_version: "v2"
+
+# Security configuration
+fail2ban_bantime: 3600
+fail2ban_findtime: 600
+fail2ban_maxretry: 3
+
+# Swap configuration
+swap_size_mb: 2048

@@ -1,0 +1,25 @@
+---
+- name: Create swap file
+  command: dd if=/dev/zero of=/swapfile bs=1M count=2048 creates=/swapfile
+  when: ansible_swaptotal_mb < 1
+
+- name: Set swap file permissions
+  file:
+    path: /swapfile
+    mode: '0600'
+  when: ansible_swaptotal_mb < 1
+
+- name: Make swap
+  command: mkswap /swapfile
+  when: ansible_swaptotal_mb < 1
+
+- name: Enable swap
+  command: swapon /swapfile
+  when: ansible_swaptotal_mb < 1
+
+- name: Add swap to fstab
+  lineinfile:
+    path: /etc/fstab
+    line: '/swapfile none swap sw 0 0'
+    state: present
+  when: ansible_swaptotal_mb < 1

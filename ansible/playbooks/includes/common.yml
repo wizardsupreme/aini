@@ -1,0 +1,5 @@
+---
+- name: Deploy Traefik
+  include_role:
+    name: apps/traefik
+  tags: ['traefik']

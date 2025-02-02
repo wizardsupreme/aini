@@ -1,41 +1,52 @@
 ---
-# Initial playbook for variable loading
+# Load variables and set defaults
 - name: Load common configuration
   hosts: localhost
   pre_tasks:
     - include_tasks: includes/load_vars.yml
+      tags: ['always']
+    
+    # Debug tasks to check variables
+    - name: Debug DEPLOY_ENV
+      debug:
+        msg: "DEPLOY_ENV is: {{ lookup('env', 'DEPLOY_ENV') | default('dev2') }}"
+      tags: ['provision', 'server', 'app-server']
+        
+    - name: Debug loaded variables
+      debug:
+        msg: 
+          - "hetzner_token: {{ hetzner_token | default('not defined') }}"
+          - "vars_dir: ../../vars/{{ lookup('env', 'DEPLOY_ENV') | default('dev2') }}"
+      tags: ['provision', 'server', 'app-server']
   vars:
-    target: "{{ target | default('app') }}"
-    project_defaults: "{{ playbook_dir }}/../defaults/main.yml"
-    action: "{{ action | default('create') }}"  # Can be 'create' or 'delete'
+    action: "{{ action | default('create') }}"
 
-# Import other playbooks
-- import_playbook: provision/ssh_key.yml
-  vars:
-    state: "{{ 'present' if action == 'create' else 'absent' }}"
-  tags: ['provision', 'ssh_key']
+# Provisioning
+- name: Provision Infrastructure
+  hosts: localhost
+  roles:
+    - role: infrastructure/ssh_key
+      tags: ['provision', 'ssh_key']
+    - role: infrastructure/app_server
+      tags: ['provision', 'server', 'app-server']
+    - role: infrastructure/gpu_server
+      tags: ['provision', 'server', 'gpu-server']
 
-- import_playbook: provision/app_servers.yml
-  vars:
-    state: "{{ 'present' if action == 'create' else 'absent' }}"
-    target: "{{ target | default('provision-cpu') }}"
+# Configuration
+- name: Configure Base System
+  hosts: app_servers
+  roles:
+    - role: platform/base
+      tags: ['configure', 'base']
 
-# - import_playbook: provision/gpu_servers.yml
-#   vars:
-#     state: "{{ 'present' if action == 'create' else 'absent' }}"
-#     target: "{{ target | default('provision-gpu') }}"
-
-# configuration playbooks
-- import_playbook: configure/base.yml
-  vars:
-    state: "{{ 'present' if action == 'create' else 'absent' }}"
-    target: "{{ target | default('configure-base') }}"
-
-- import_playbook: configure/apps.yml
-  vars:
-    state: "{{ 'present' if action == 'create' else 'absent' }}"
-    target: "{{ target | default('configure-app') }}"
-
-# - import_playbook: configure/ml.yml
-#   when: action == 'create' and target == 'gpu'
-#   tags: ['configure', 'ml']
+# Apps
+- name: Deploy Applications
+  hosts: app_servers
+  tasks:
+    - name: Include common apps
+      include_tasks: includes/common_apps.yml
+      tags: ['apps', 'common']
+      
+    - name: Include app-server specific apps
+      include_tasks: includes/app_apps.yml
+      tags: ['apps', 'app-specific']

@@ -1,0 +1,58 @@
+# tasks/main.yml
+---
+- name: Verify required variables are defined
+  assert:
+    that: 
+      - hetzner_token is defined and hetzner_token | length > 0
+    fail_msg: "Required variable 'hetzner_token' is not defined or empty"
+
+- name: Create or manage server
+  hcloud_server:
+    api_token: "{{ hetzner_token }}"
+    name: "{{ hetzner_project_name }}-app"
+    server_type: "{{ hetzner_server_type }}"
+    image: "{{ hetzner_server_image }}"
+    location: "{{ hetzner_server_location }}"
+    ssh_keys:
+      - "{{ hetzner_ssh_key_name }}"
+    state: "{{ state }}"
+    enable_ipv4: "{{ hetzner_enable_ipv4 }}"
+    enable_ipv6: "{{ hetzner_enable_ipv6 }}"
+  register: server
+  async: 300
+  poll: 0
+
+- name: Wait for server creation
+  async_status:
+    jid: "{{ server.ansible_job_id }}"
+  register: job_result
+  until: job_result.finished
+  retries: 5
+  delay: 10
+  when: server.ansible_job_id is defined
+
+- name: Debug server variable at start of DNS tasks
+  debug:
+    msg: 
+      - "job_result: {{ job_result }}"
+      - "ip: {{ job_result.hcloud_server.ipv4_address }}"
+  when: state == "present"
+
+- name: Manage DNS records
+  include_tasks: 
+    file: dns.yml
+    apply:
+      vars:
+        ipv4_address: "{{ job_result.hcloud_server.ipv4_address }}"
+  when: 
+    - hetzner_dns_zone is defined
+    - server is defined
+
+- name: Manage inventory
+  include_tasks: 
+    file: inventory.yml
+    apply:
+      vars:
+        ipv4_address: "{{ job_result.hcloud_server.ipv4_address }}"
+        server_name: "{{ hetzner_project_name }}-app"
+  when: server is defined
