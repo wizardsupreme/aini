@@ -297,3 +297,129 @@ docker --context aini-apps-server ps --format "table {{.Names}}\t{{.Status}}\t{{
 - Keep your Docker contexts secure
 - Never expose Docker daemon ports directly to the internet
 - Always use SSH for remote Docker management
+
+# AI-Powered Infrastructure Stack
+
+## Core Components
+
+### 1. Authentication & Database
+- **Supabase** (self-hosted)
+  - PostgreSQL database
+  - Auth management
+  - Resource needs:
+    - 2-4 CPU cores
+    - 4-8GB RAM
+    - 20GB SSD
+
+### 2. Document Management
+- **Nextcloud**
+  - File storage
+  - Mail interface
+  - Calendar/Contacts
+  - Resource needs:
+    - 2 CPU cores
+    - 4GB RAM
+  - Dependencies:
+    - MariaDB
+    - Redis
+
+### 3. Document Editing
+- **OnlyOffice** (self-hosted)
+  - Document server
+  - Resource needs:
+    - 2 CPU cores
+    - 2GB RAM
+    - 4GB storage
+
+### 4. Vector Database
+- **Milvus**
+  - Knowledge storage
+  - Vector search
+  - Resource needs:
+    - 4-8 CPU cores
+    - 8-16GB RAM
+    - NVMe SSD recommended
+
+### 5. Email System
+- **Zoho Mail** (external service)
+  - Free tier
+  - 5 users
+  - 5GB per user
+  - SMTP/IMAP for Nextcloud
+
+### 6. AI Agent Interface
+- **LibreChat**
+  - Web interface
+  - API access
+  - Resource needs:
+    - 2 CPU cores
+    - 4GB RAM
+
+### 7. Automation
+- **n8n**
+  - Workflow automation
+  - Resource needs:
+    - 1-2 CPU cores
+    - 2GB RAM
+
+### 8. Reverse Proxy
+- **Traefik**
+  - SSL termination
+  - Routing
+  - Resource needs:
+    - 1 CPU core
+    - 1GB RAM
+
+## Server Requirements
+
+### Minimum Total Resources
+- CPU: 16-24 cores total
+- RAM: 32-48GB total
+- Storage: 100GB+ NVMe SSD
+- Network: 1Gbps
+
+### Recommended Hetzner Setup
+1. **Primary Server** (AX41-NVMe)
+   - 8 cores
+   - 32GB RAM
+   - 2x512GB NVMe
+   - Cost: ~€44.90/month
+
+2. **Secondary Server** (CPX31)
+   - 4 cores
+   - 8GB RAM
+   - 160GB SSD
+   - Cost: ~€13.90/month
+
+## Domain Requirements
+- Primary domain for services
+- DNS configuration for:
+  - Nextcloud
+  - OnlyOffice
+  - LibreChat
+  - Email (Zoho)
+  - Other services
+
+## Cost Breakdown
+### Monthly Infrastructure
+- Hetzner AX41: €44.90
+- Hetzner CPX31: €13.90
+- Domain: ~€1-2
+- Zoho Mail: Free tier
+- All other services: Self-hosted/Free
+
+**Total Monthly: ~€60-65**
+
+## Maintenance Requirements
+- Regular backups
+- Security updates
+- Performance monitoring
+- SSL certificate renewal (automated)
+- Storage management
+
+## AI Agent Management
+- Email monitoring/responses
+- Document organization
+- Workflow automation
+- System health monitoring
+- User support
