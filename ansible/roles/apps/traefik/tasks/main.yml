@@ -11,11 +11,12 @@
     - /opt/traefik/config/dynamic
     - /opt/traefik/certs
 
-- name: Debug variables
-  debug:
-    msg: 
-      - "Domain: {{ domain | default('not set') }}"
-  tags: ['debug']
+- name: Verify domain is available
+  assert:
+    that:
+      - domain is defined
+      - domain | length > 0
+    fail_msg: "domain is required for Traefik management"
 
 - name: Template docker-compose.yml
   template:
@@ -53,7 +54,9 @@
     recreate: always
   register: traefik_output
 
-- name: Debug Traefik deployment
-  debug:
-    var: traefik_output
-  when: traefik_output is defined
+- name: Verify traefik_output is available
+  assert:
+    that:
+      - traefik_output is defined
+      - traefik_output | length > 0
+    fail_msg: "traefik_output did not come up!"

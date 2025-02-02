@@ -19,10 +19,3 @@
     - "{{ playbook_dir }}/../vars/common"
     - "{{ playbook_dir }}/../vars/{{ deploy_env }}"
   tags: ['always']
-
-
-- name: Debug variables
-  debug:
-    msg: 
-      - "Domain: {{ domain | default('not set') }}"
-  tags: ['always']

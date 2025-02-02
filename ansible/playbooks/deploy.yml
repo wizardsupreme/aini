@@ -27,13 +27,6 @@
     - include_tasks: includes/load_vars.yml
       tags: ['always']
   tasks:
-
-    - name: Manage Traefik
-      include_role:
-        name: apps/traefik
-      tags: ['traefik']
-
-    # - name: Manage Whoami
-    #   include_role:
-    #     name: apps/whoami
-    #   tags: ['whoami']
+    - name: Include apps tasks
+      include_tasks: includes/apps.yml
+      tags: ['apps']
