@@ -33,6 +33,7 @@
     - { src: traefik.yml.j2, dest: traefik.yml }
     - { src: dynamic/middlewares.yml.j2, dest: dynamic/middlewares.yml }
     - { src: dynamic/tls.yml.j2, dest: dynamic/tls.yml }
+    - { src: dynamic/services.yml.j2, dest: dynamic/services.yml }
 
 - name: Create acme.json
   file:

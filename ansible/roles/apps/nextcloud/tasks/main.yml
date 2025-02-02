@@ -1,0 +1,49 @@
+---
+- name: Create Nextcloud directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - /opt/nextcloud
+    - /opt/nextcloud/config
+
+- name: Template configurations
+  template:
+    src: "{{ item.src }}"
+    dest: "/opt/nextcloud/{{ item.dest }}"
+    mode: '0644'
+  loop:
+    - { src: docker-compose.yml.j2, dest: docker-compose.yml }
+    - { src: config.php.j2, dest: config/config.php }
+    - { src: reverse-proxy.config.php.j2, dest: config/reverse-proxy.config.php }
+    - { src: external_storage.config.php.j2, dest: config/external_storage.config.php }
+
+- name: Start Nextcloud
+  community.docker.docker_compose_v2:
+    project_src: /opt/nextcloud
+    state: present
+    pull: "missing"
+    remove_orphans: true
+    recreate: always
+
+- name: Wait for Nextcloud to be ready
+  uri:
+    url: "https://nextcloud.{{ domain }}"
+    validate_certs: yes
+    status_code: 200
+    return_content: yes
+  register: result
+  until: result.status == 200
+  retries: 60
+  delay: 5
+  ignore_errors: yes
+
+- name: Debug Nextcloud response
+  debug:
+    var: result
+  when: result.failed
+
+- name: Ensure proper permissions
+  command: docker exec nextcloud chown -R www-data:www-data /var/www/html
+  changed_when: false

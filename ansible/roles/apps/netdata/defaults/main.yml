@@ -1,0 +1,13 @@
+---
+netdata_version: "latest"
+netdata_web_port: 19999
+netdata_claim_token: ""  # Optional: for claiming to netdata.cloud
+netdata_claim_room: ""   # Optional: for claiming to netdata.cloud
+netdata_claim_url: "https://app.netdata.cloud"
+
+# System monitoring options
+netdata_disable_telemetry: true
+netdata_update_every: 1
+netdata_memory_mode: "dbengine"
+netdata_page_cache_size: 32
+netdata_dbengine_disk_space: 256 

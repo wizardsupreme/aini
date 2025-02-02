@@ -1,17 +1,36 @@
 ---
 - name: Deploy Traefik
-  include_role:
+  import_role:
     name: apps/traefik
-  tags: ['traefik']
+  tags:
+    - traefik
 
 # - name: Deploy Consul
 #   include_role:
 #     name: apps/consul
 #   tags: ['consul']
 
+- name: Deploy Netdata
+  import_role:
+    name: apps/netdata
+  tags:
+    - netdata
+
+- name: Deploy Grafana
+  import_role:
+    name: apps/grafana
+  tags:
+    - grafana
+
 # - name: Deploy N8N
 #   include_role:
 #     name: apps/n8n
 #   tags: ['n8n']
+
+- name: Deploy Nextcloud
+  import_role:
+    name: apps/nextcloud
+  tags:
+    - nextcloud
 
 # Add more CPU-specific apps here

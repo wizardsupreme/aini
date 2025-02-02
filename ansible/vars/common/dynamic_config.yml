@@ -1,0 +1,42 @@
+---
+# Dynamic configuration for various services
+dynamic_configs:
+  # Traefik dynamic configuration blocks
+  traefik:
+    # HTTP routing configurations
+    http:
+      routers:
+        netdata:
+          rule: "Host(`netdata.{{ domain }}`)"
+          service: "netdata"
+          entryPoints:
+            - "websecure"
+          tls:
+            certResolver: "letsencrypt"
+        grafana:
+          rule: "Host(`grafana.{{ domain }}`)"
+          service: "grafana"
+          entryPoints:
+            - "websecure"
+          tls:
+            certResolver: "letsencrypt"
+        nextcloud:
+          rule: "Host(`nextcloud.{{ domain }}`)"
+          service: "nextcloud"
+          entryPoints:
+            - "websecure"
+          tls:
+            certResolver: "letsencrypt"
+      services:
+        netdata:
+          loadBalancer:
+            servers:
+              - url: "http://netdata:19999"
+        grafana:
+          loadBalancer:
+            servers:
+              - url: "http://grafana:3000"
+        nextcloud:
+          loadBalancer:
+            servers:
+              - url: "http://nextcloud:80" 

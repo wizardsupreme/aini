@@ -22,11 +22,11 @@
 - name: Manage Applications
   hosts: app_servers
   gather_facts: true
-  tags: ['apps', 'never']
+  tags: ['apps']
   pre_tasks:
     - include_tasks: includes/load_vars.yml
       tags: ['always']
   tasks:
     - name: Include apps tasks
       include_tasks: includes/apps.yml
-      tags: ['apps']
+      tags: ['apps','traefik','netdata','grafana','nextcloud']

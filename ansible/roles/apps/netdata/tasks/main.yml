@@ -1,0 +1,69 @@
+---
+- name: Create Netdata directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - /opt/netdata
+    - /opt/netdata/config
+    - /opt/netdata/config/go.d
+
+- name: Copy Netdata configurations
+  template:
+    src: "{{ item.src }}"
+    dest: "/opt/netdata/config/{{ item.dest }}"
+    mode: '0644'
+  loop:
+    - { src: cgroups.conf.j2, dest: cgroups.conf }
+    - { src: go.d/containerd.conf.j2, dest: go.d/containerd.conf }
+
+- name: Template docker-compose.yml
+  template:
+    src: docker-compose.yml.j2
+    dest: /opt/netdata/docker-compose.yml
+    mode: '0644'
+
+- name: Start Netdata
+  community.docker.docker_compose_v2:
+    project_src: /opt/netdata
+    state: present
+    pull: "missing"
+    remove_orphans: true
+    recreate: always
+
+- name: Check containerd status
+  command: systemctl status containerd
+  register: containerd_status
+  changed_when: false
+  failed_when: false
+
+- name: Display containerd status
+  debug:
+    var: containerd_status.stdout_lines
+
+- name: Check containerd metrics endpoint
+  command: curl -s http://localhost:1338/v1/metrics
+  register: containerd_metrics
+  changed_when: false
+  failed_when: false
+
+- name: Check containerd config
+  command: cat /etc/containerd/config.toml
+  register: containerd_config
+  changed_when: false
+  failed_when: false
+
+- name: Display containerd config
+  debug:
+    var: containerd_config.stdout_lines
+
+- name: Check alternative metrics ports
+  command: "curl -s http://localhost:{{ item }}/metrics"
+  loop:
+    - "9001"        # Common containerd metrics port
+    - "10257"       # Alternative metrics port
+    - "10250"       # Kubelet metrics port (if Kubernetes is involved)
+  register: metrics_check
+  changed_when: false
+  failed_when: false 

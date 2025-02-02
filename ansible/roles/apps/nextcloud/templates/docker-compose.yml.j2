@@ -1,0 +1,111 @@
+---
+version: '3.8'
+
+services:
+  nextcloud:
+    image: nextcloud:${NEXTCLOUD_VERSION:-latest}
+    container_name: nextcloud
+    restart: unless-stopped
+    volumes:
+      - nextcloud-html:/var/www/html
+      - nextcloud-config:/var/www/html/config
+      - nextcloud-apps:/var/www/html/custom_apps
+    environment:
+      - MYSQL_HOST=nextcloud-db
+      - MYSQL_DATABASE={{ nextcloud_db_name }}
+      - MYSQL_USER={{ nextcloud_db_user }}
+      - MYSQL_PASSWORD={{ nextcloud_db_password }}
+      - NEXTCLOUD_ADMIN_USER={{ nextcloud_admin_user }}
+      - NEXTCLOUD_ADMIN_PASSWORD={{ nextcloud_admin_password }}
+      - NEXTCLOUD_TRUSTED_DOMAINS=nextcloud.{{ domain }}
+      - NEXTCLOUD_DATABASE_TYPE=mysql
+      - NEXTCLOUD_DATABASE_HOST=nextcloud-db
+      - NEXTCLOUD_DATABASE_NAME={{ nextcloud_db_name }}
+      - NEXTCLOUD_DATABASE_USER={{ nextcloud_db_user }}
+      - NEXTCLOUD_DATABASE_PASSWORD={{ nextcloud_db_password }}
+      - NEXTCLOUD_DATA_DIR=/var/www/html/data
+      - NEXTCLOUD_INSTALL_APPS=calendar,contacts,tasks
+      - NEXTCLOUD_AUTO_INSTALL=yes
+      - NEXTCLOUD_TABLE_PREFIX=oc_
+      - NEXTCLOUD_UPDATE=1
+      - PHP_MEMORY_LIMIT=512M
+      - PHP_UPLOAD_LIMIT=512M
+      - PHP_MAX_EXECUTION_TIME=300
+      - PHP_MAX_INPUT_TIME=300
+      - PHP_APC_SHM_SIZE=128M
+      - PHP_OPCACHE_MEMORY_CONSUMPTION=128
+      - PHP_OPCACHE_INTERNED_STRINGS_BUFFER=16
+      - APACHE_DISABLE_REWRITE_IP=1
+      - TRUSTED_PROXIES=traefik_network
+      - REDIS_HOST=redis
+      - REDIS_HOST_PORT=6379
+    networks:
+      - traefik_network
+      - nextcloud_internal
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.nextcloud.rule=Host(`nextcloud.{{ domain }}`)"
+      - "traefik.http.routers.nextcloud.entrypoints=websecure"
+      - "traefik.http.routers.nextcloud.tls.certresolver=letsencrypt"
+      - "traefik.http.services.nextcloud.loadbalancer.server.port={{ nextcloud_web_port }}"
+      # Basic auth headers
+      - "traefik.http.middlewares.nextcloud-auth.headers.browserXssFilter=true"
+      - "traefik.http.middlewares.nextcloud-auth.headers.frameDeny=false"
+      - "traefik.http.middlewares.nextcloud-auth.headers.sslRedirect=true"
+      - "traefik.http.middlewares.nextcloud-auth.headers.forceSTSHeader=true"
+      # Redirect paths
+      - "traefik.http.middlewares.nextcloud-redirect.redirectregex.permanent=true"
+      - "traefik.http.middlewares.nextcloud-redirect.redirectregex.regex=/.well-known/(card|cal)dav"
+      - "traefik.http.middlewares.nextcloud-redirect.redirectregex.replacement=/remote.php/dav/"
+      # Chain middlewares
+      - "traefik.http.routers.nextcloud.middlewares=nextcloud-auth,nextcloud-redirect,nextcloud-headers,nextcloud-secure"
+      # Handle .well-known URLs
+      - "traefik.http.middlewares.nextcloud-wellknown.redirectregex.permanent=true"
+      - "traefik.http.middlewares.nextcloud-wellknown.redirectregex.regex=/.well-known/(?:card|cal)dav"
+      - "traefik.http.middlewares.nextcloud-wellknown.redirectregex.replacement=/remote.php/dav/"
+      # HSTS and security headers
+      - "traefik.http.middlewares.nextcloud-headers.headers.stsSeconds=31536000"
+      - "traefik.http.middlewares.nextcloud-headers.headers.stsIncludeSubdomains=true"
+      - "traefik.http.middlewares.nextcloud-headers.headers.stsPreload=true"
+      # Add these headers
+      - "traefik.http.middlewares.nextcloud-headers.headers.customFrameOptionsValue=SAMEORIGIN"
+      - "traefik.http.middlewares.nextcloud-headers.headers.customResponseHeaders.X-Robots-Tag=none"
+      - "traefik.http.middlewares.nextcloud-headers.headers.customResponseHeaders.X-Download-Options=noopen"
+      - "traefik.http.middlewares.nextcloud-headers.headers.customResponseHeaders.X-Permitted-Cross-Domain-Policies=none"
+      - "traefik.http.middlewares.nextcloud-headers.headers.customResponseHeaders.Referrer-Policy=no-referrer"
+      - "traefik.http.middlewares.nextcloud-secure.headers.contentSecurityPolicy=frame-ancestors 'self' nextcloud.{{ domain }}"
+
+  nextcloud-db:
+    image: mariadb:10.6
+    container_name: nextcloud-db
+    restart: unless-stopped
+    command: --transaction-isolation=READ-COMMITTED --log-bin=ROW
+    volumes:
+      - nextcloud-db:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD={{ nextcloud_db_root_password }}
+      - MYSQL_DATABASE={{ nextcloud_db_name }}
+      - MYSQL_USER={{ nextcloud_db_user }}
+      - MYSQL_PASSWORD={{ nextcloud_db_password }}
+    networks:
+      - nextcloud_internal
+
+  redis:
+    image: redis:alpine
+    container_name: nextcloud-redis
+    restart: unless-stopped
+    networks:
+      - nextcloud_internal
+
+volumes:
+  nextcloud-html:
+  nextcloud-config:
+  nextcloud-apps:
+  nextcloud-db:
+
+networks:
+  traefik_network:
+    external: true
+    name: traefik-public
+  nextcloud_internal:
+    name: nextcloud_internal 

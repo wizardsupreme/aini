@@ -1,0 +1,24 @@
+---
+- name: Create Grafana directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - /opt/grafana
+    - /opt/grafana/data
+    - /opt/grafana/provisioning
+
+- name: Template docker-compose.yml
+  template:
+    src: docker-compose.yml.j2
+    dest: /opt/grafana/docker-compose.yml
+    mode: '0644'
+
+- name: Start Grafana
+  community.docker.docker_compose_v2:
+    project_src: /opt/grafana
+    state: present
+    pull: "missing"
+    remove_orphans: true
+    recreate: always 

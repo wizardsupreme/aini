@@ -1,0 +1,34 @@
+<?php
+$CONFIG = array (
+  'instanceid' => '{{ 999999999 | random | to_uuid }}',
+  'passwordsalt' => '{{ 999999999 | random | to_uuid }}',
+  'secret' => '{{ 999999999 | random | to_uuid }}',
+  'trusted_domains' => array(
+    0 => 'nextcloud.{{ domain }}',
+  ),
+  'datadirectory' => '/var/www/html/data',
+  'dbtype' => '{{ nextcloud_db_type }}',
+  'version' => '27.1.3.2',
+  'dbname' => '{{ nextcloud_db_name }}',
+  'dbhost' => 'nextcloud-db',
+  'dbport' => '',
+  'dbtableprefix' => 'oc_',
+  'dbuser' => '{{ nextcloud_db_user }}',
+  'dbpassword' => '{{ nextcloud_db_password }}',
+  'installed' => true,
+  
+  // Added settings
+  'overwrite.cli.url' => 'https://nextcloud.{{ domain }}',
+  'overwriteprotocol' => 'https',
+  'overwritehost' => 'nextcloud.{{ domain }}',
+  
+  // Performance tuning
+  'memcache.local' => '\\OC\\Memcache\\APCu',
+  
+  // Recommended security settings
+  'debug' => false,
+  'log_type' => 'file',
+  'logfile' => '/var/www/html/data/nextcloud.log',
+  'loglevel' => 2,
+  'maintenance' => false,
+); 

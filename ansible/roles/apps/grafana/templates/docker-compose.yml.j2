@@ -1,0 +1,32 @@
+---
+version: '3.8'
+
+services:
+  grafana:
+    image: grafana/grafana:${GRAFANA_VERSION:-latest}
+    container_name: grafana
+    restart: unless-stopped
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - grafana-provisioning:/etc/grafana/provisioning
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_INSTALL_PLUGINS=${GRAFANA_PLUGINS:-""}
+    networks:
+      - traefik_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.grafana.rule=Host(`grafana.{{ domain }}`)"
+      - "traefik.http.routers.grafana.entrypoints=websecure"
+      - "traefik.http.routers.grafana.tls.certresolver=letsencrypt"
+      - "traefik.http.services.grafana.loadbalancer.server.port={{ grafana_port }}"
+
+volumes:
+  grafana-data:
+  grafana-provisioning:
+
+networks:
+  traefik_network:
+    external: true
+    name: traefik-public 

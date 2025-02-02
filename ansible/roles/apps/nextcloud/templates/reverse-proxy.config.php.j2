@@ -1,0 +1,9 @@
+<?php
+$CONFIG = array (
+  'trusted_proxies' => array('traefik_network'),
+  'forwarded_for_headers' => array('HTTP_X_FORWARDED_FOR'),
+  'overwritewebroot' => '',
+  'overwriteprotocol' => 'https',
+  'overwritehost' => 'nextcloud.{{ domain }}',
+  'overwritecondaddr' => '',
+); 

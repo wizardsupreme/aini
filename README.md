@@ -10,9 +10,11 @@ AINI provides automated deployment of AI and productivity infrastructure using D
 - Docker with IPv6 support
 - Complete application stack:
   - Traefik (reverse proxy + SSL)
-  - Netdata (monitoring)
+  - Netdata + cAdvisor (system and container monitoring)
   - Consul + Vault (configuration/secrets)
-  - Nextcloud + OnlyOffice (file storage/editing)
+  - AFFiNE (Notion-like workspace, knowledge base)
+  - Nextcloud (file storage/sync with Hetzner Storage Box)
+  - NocoDB (Airtable alternative)
   - Watchtower (automatic updates)
   - LibreChat (AI frontend)
   - N8N (workflow automation)
@@ -23,30 +25,57 @@ AINI provides automated deployment of AI and productivity infrastructure using D
 - uv (Python package installer)
 - SSH key pair
 - Hetzner Cloud account
+- Supabase account
+- git-crypt installed
 
 ## Directory Structure
 ansible/
+├── inventory/
+│   └── group_vars/        # Group variables
 ├── playbooks/
-│   ├── deploy.yml               # Main entry point
+│   ├── deploy.yml         # Main deployment playbook
 │   └── includes/
-│       ├── load_vars.yml       # Keep existing
-│       ├── common_apps.yml     # Common apps for both types
-│       ├── cpu_apps.yml        # CPU-server specific apps
-│       └── gpu_apps.yml        # GPU-server specific apps
-│
+│       ├── apps.yml       # Application deployments
+│       └── load_vars.yml  # Variable loading
 ├── roles/
-│   ├── provision/
-│   │   ├── common/            # SSH keys etc
-│   │   ├── cpu_servers/       # CPU server provisioning
-│   │   └── gpu_servers/       # GPU server provisioning
-│   │
-│   ├── configure/
-│   │   └── base/             # Base configuration
-│   │
-│   └── apps/                 # Individual app roles
+│   ├── infrastructure/    # Infrastructure roles
+│   │   ├── app_server/
+│   │   └── ssh_key/
+│   └── apps/             # Application roles
 │       ├── traefik/
-│       ├── consul/
+│       ├── netdata/
+│       ├── affine/
+│       ├── nextcloud/
 │       └── ... other apps
+└── vars/
+    └── dev2/             # Environment specific vars
+        └── secrets.yml   # Encrypted secrets
+
+## Resource Management
+
+### System Resources (CAX11 - 4GB RAM)
+Core Services:
+  - Traefik: ~50MB
+  - Netdata: ~200MB
+  - cAdvisor: ~128MB
+Main Applications:
+  - AFFiNE: ~500MB
+  - Nextcloud + MariaDB: ~800MB
+  - NocoDB: ~150MB
+Infrastructure:
+  - Consul: ~250MB
+  - Vault: ~100MB
+  - n8n: ~200MB
+  - LibreChat: ~300MB
+
+### External Services
+- Supabase:
+  - Authentication
+  - Database backend for AFFiNE, NocoDB, n8n
+  - Real-time collaboration
+- Hetzner Storage Box:
+  - SFTP storage for Nextcloud
+  - Backup storage
 
 ## Local Development Setup
 
@@ -61,13 +90,8 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 
 2. Create and activate a virtual environment:
 ```bash
-# Create a new venv in the project directory
 uv venv
-
-# Activate the virtual environment
-source .venv/bin/activate  # On Unix/macOS
-# or
-.venv\Scripts\activate  # On Windows
+source .venv/bin/activate
 ```
 
 3. Install project dependencies:
@@ -75,128 +99,79 @@ source .venv/bin/activate  # On Unix/macOS
 uv pip install -r requirements.txt
 ```
 
-4. Install Ansible dependencies (these will be installed in the project's ansible/roles and ansible/collections directories):
-```bash
-# Install roles to ansible/roles
-ansible-galaxy install -r ansible/requirements.yml --roles-path ansible/roles
+## Git-Crypt Setup
 
-# Install collections to ansible/collections
-ansible-galaxy collection install -r ansible/requirements.yml --collections-path ansible/collections
+1. Install git-crypt:
+```bash
+# macOS
+brew install git-crypt
+
+# Ubuntu/Debian
+apt-get install git-crypt
 ```
 
-5. Configure secrets:
+2. Initialize git-crypt in your repository:
 ```bash
-# Copy the example secrets file
-cp ansible/vars/secrets.example.yml ansible/vars/secrets.yml
-
-# Create a vault password file (keep this secure and never commit it)
-echo "your-secure-password" > .vault_pass
-chmod 600 .vault_pass
-
-# Edit your secrets
-ansible-vault edit ansible/vars/secrets.yml
+git-crypt init
 ```
 
-6. Configure required variables in secrets.yml:
-   - `hetzner_token`: Your Hetzner Cloud API token
-   - `hetzner_ssh_key_name`: Name for your SSH key in Hetzner
-   - `project_name`: Your project name (used for server naming)
-   - `app_server_type`: Hetzner server type (e.g., "cx11")
-   - Optional variables:
-     - `server_image`: Server OS image (default: "ubuntu-24.04")
-     - `server_location`: Hetzner datacenter location (default: "fsn1")
-   - Other configuration variables as needed
+3. Configure .gitattributes:
+```
+ansible/vars/dev2/secrets.yml filter=git-crypt diff=git-crypt
+```
+
+4. Add trusted GPG keys:
+```bash
+git-crypt add-gpg-user USER_ID
+```
+
+5. Unlock repository after cloning:
+```bash
+git-crypt unlock
+```
+
+## Supabase Setup
+
+1. Create a Supabase project
+2. Configure environment variables in secrets.yml:
+```yaml
+supabase_url: "your-project-url"
+supabase_anon_key: "your-anon-key"
+supabase_service_role_key: "your-service-role-key"
+```
 
 ## Quick Start
 
 1. Initialize SSH key in Hetzner:
 ```bash
-ansible-playbook ansible/playbooks/configure/ssh_key.yml
+ansible-playbook playbooks/deploy.yml --tags "ssh_key"
 ```
 
-2. Create S3 storage bucket:
-this doesnt currently work as we are using hetzner storage which doesnt seem to work with api calls.
+2. Deploy core infrastructure:
 ```bash
-ansible-playbook ansible/playbooks/configure/storage.yml
+ansible-playbook playbooks/deploy.yml --tags "apps,traefik,netdata"
 ```
 
-3. Manage servers:
+3. Deploy applications:
 ```bash
-# Create application servers
-ansible-playbook ansible/playbooks/provision/app_servers.yml -e "state=present"
+# Deploy all apps
+ansible-playbook playbooks/deploy.yml --tags "apps"
 
-# Configure base system and applications
-ansible-playbook ansible/playbooks/configure/base.yml
-ansible-playbook ansible/playbooks/configure/apps.yml
-
-# Delete application servers
-ansible-playbook ansible/playbooks/provision/app_servers.yml -e "state=absent"
-```
-
-4. Or use the deploy playbook for full infrastructure management:
-```bash
-# Create all infrastructure
-ansible-playbook ansible/playbooks/deploy.yml -e "action=create"
-
-# Delete all infrastructure
-ansible-playbook ansible/playbooks/deploy.yml -e "action=delete"
-
-# Deploy specific components using tags
-ansible-playbook ansible/playbooks/deploy.yml --tags "servers,storage,app"
-
-# For app servers
-ansible-playbook ansible/playbooks/deploy.yml -e "action=create" --tags app
-
-# For GPU servers
-ansible-playbook ansible/playbooks/deploy.yml -e "action=create" --tags gpu
-
-# For deletion
-ansible-playbook ansible/playbooks/deploy.yml -e "action=delete" --tags app
-
-# For base configuration
-ansible-playbook ansible/playbooks/configure/base.yml
-```
-
-## Directory Structure
-
-```
-aini/
-├── ansible/
-│   ├── collections/            # Ansible collections (gitignored)
-│   ├── inventory/             # Server inventory
-│   ├── playbooks/            # Playbook files
-│   ├── roles/                # Ansible roles (gitignored)
-│   │   └── requirements.yml  # Role requirements specification
-│   └── vars/                 # Variable files
-│       ├── secrets.yml       # Encrypted secrets (do not commit unencrypted)
-│       └── secrets.example.yml  # Example secrets file
-├── docker/                      # Docker configurations
-├── docs/                        # Documentation
-├── tests/                       # Test scripts
-├── scripts/                     # Utility scripts
-└── README.md                    # This file
+# Deploy specific apps
+ansible-playbook playbooks/deploy.yml --tags "apps,affine,nextcloud,nocodb"
 ```
 
 ## Security
 
-- All sensitive information is encrypted using Ansible Vault
-- Never commit the `.vault_pass` file
-- Keep your vault password secure
-
-## Development
-
-1. Install dependencies:
-```bash
-pip install -r requirements.txt
-ansible-galaxy install -r ansible/requirements.yml
-```
-
-2. Set up your secrets as described in the Setup section
+- All sensitive files are encrypted using git-crypt
+- Ensure your GPG key is secure
+- Never commit unencrypted sensitive files
+- Check .gitattributes for encrypted files
 
 ## Documentation
 
-- [Architecture](docs/architecture.md) - System components and design
-- [Development](docs/development.md) - Development guide
+- [Architecture](docs/architecture.md)
+- [Development](docs/development.md)
 
 ## License
 

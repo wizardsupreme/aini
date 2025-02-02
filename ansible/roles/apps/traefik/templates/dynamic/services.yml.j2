@@ -1,0 +1,25 @@
+---
+# Dynamic configuration for services
+http:
+  routers:
+    {% for router_name, router in dynamic_configs.traefik.http.routers.items() %}
+    {{ router_name }}:
+      rule: {{ router.rule }}
+      service: {{ router.service }}
+      entryPoints:
+        {% for entryPoint in router.entryPoints %}
+        - {{ entryPoint }}
+        {% endfor %}
+      tls:
+        certResolver: {{ router.tls.certResolver }}
+    {% endfor %}
+
+  services:
+    {% for service_name, service in dynamic_configs.traefik.http.services.items() %}
+    {{ service_name }}:
+      loadBalancer:
+        servers:
+          {% for server in service.loadBalancer.servers %}
+          - url: {{ server.url }}
+          {% endfor %}
+    {% endfor %} 

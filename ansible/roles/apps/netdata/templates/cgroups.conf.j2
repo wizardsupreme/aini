@@ -1,0 +1,14 @@
+# Netdata cgroups configuration
+[plugin:cgroups]
+    enable cgroup network tracking = yes
+    enable systemd services = yes
+    enable systemd services detailed = yes
+    update every = 1
+
+    # Monitor containerd
+    search for cgroups in subpaths matching =
+        *containerd*
+        *docker*
+        *.scope
+        *.service
+        *system.slice* 
