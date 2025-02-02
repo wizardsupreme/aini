@@ -3,7 +3,3 @@
 traefik_version: "v2.10"
 traefik_debug: false
 timezone: "UTC"
-domain: "{{ domain | default(lookup('env', 'DOMAIN')) }}"
-acme_email: "{{ acme_email | default(lookup('env', 'ACME_EMAIL')) }}"
-traefik_username: "{{ traefik_username | default(lookup('env', 'TRAEFIK_USER')) }}"
-traefik_password_hash: "{{ traefik_password | default(lookup('env', 'TRAEFIK_PASSWORD')) | password_hash('bcrypt') }}"

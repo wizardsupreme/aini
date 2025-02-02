@@ -5,48 +5,35 @@
   pre_tasks:
     - include_tasks: includes/load_vars.yml
       tags: ['always']
-    
-    # Debug tasks to check variables
-    - name: Debug DEPLOY_ENV
-      debug:
-        msg: "DEPLOY_ENV is: {{ lookup('env', 'DEPLOY_ENV') | default('dev2') }}"
-      tags: ['provision', 'server', 'app-server']
-        
-    - name: Debug loaded variables
-      debug:
-        msg: 
-          - "hetzner_token: {{ hetzner_token | default('not defined') }}"
-          - "vars_dir: ../../vars/{{ lookup('env', 'DEPLOY_ENV') | default('dev2') }}"
-      tags: ['provision', 'server', 'app-server']
+
   vars:
     action: "{{ action | default('create') }}"
 
 # Provisioning
 - name: Provision Infrastructure
   hosts: localhost
+  gather_facts: true
   roles:
     - role: infrastructure/ssh_key
-      tags: ['provision', 'ssh_key']
     - role: infrastructure/app_server
-      tags: ['provision', 'server', 'app-server']
-    - role: infrastructure/gpu_server
-      tags: ['provision', 'server', 'gpu-server']
-
-# Configuration
-- name: Configure Base System
-  hosts: app_servers
-  roles:
-    - role: platform/base
-      tags: ['configure', 'base']
+      tags: ['provision', 'server']
 
 # Apps
-- name: Deploy Applications
+- name: Manage Applications
   hosts: app_servers
+  gather_facts: true
+  tags: ['apps', 'never']
+  pre_tasks:
+    - include_tasks: includes/load_vars.yml
+      tags: ['always']
   tasks:
-    - name: Include common apps
-      include_tasks: includes/common_apps.yml
-      tags: ['apps', 'common']
-      
-    - name: Include app-server specific apps
-      include_tasks: includes/app_apps.yml
-      tags: ['apps', 'app-specific']
+
+    - name: Manage Traefik
+      include_role:
+        name: apps/traefik
+      tags: ['traefik']
+
+    # - name: Manage Whoami
+    #   include_role:
+    #     name: apps/whoami
+    #   tags: ['whoami']

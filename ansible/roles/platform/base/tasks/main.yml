@@ -1,12 +1,21 @@
 ---
+- name: Update apt cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600  # Consider cache valid for 1 hour
+  become: true
+
 - name: Install basic packages
   apt:
     name:
       - python3-pip
-      - ufw
-      - fail2ban
-      - python3-passlib
+      - python3-venv
+      - git
+      - curl
+      - htop
+      - vim
     state: present
+  become: true
 
 - name: Update and upgrade system
   import_tasks: system_update.yml
@@ -17,6 +26,6 @@
 - name: Setup swap
   import_tasks: swap.yml
   when: ansible_swaptotal_mb < 1
-
 - name: Setup Security
   import_tasks: security.yml
+

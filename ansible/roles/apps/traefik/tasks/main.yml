@@ -11,6 +11,12 @@
     - /opt/traefik/config/dynamic
     - /opt/traefik/certs
 
+- name: Debug variables
+  debug:
+    msg: 
+      - "Domain: {{ domain | default('not set') }}"
+  tags: ['debug']
+
 - name: Template docker-compose.yml
   template:
     src: docker-compose.yml.j2

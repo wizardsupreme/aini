@@ -23,14 +23,12 @@
     headers:
       Auth-API-Token: "{{ hetzner_dns_token }}"
   register: zones_response
-  when: state == "present"
 
 - name: Set zone_id fact
   set_fact:
     zone_id: "{{ zones_response.json.zones | json_query(query) }}"
   vars:
     query: "[?name==`{{ hetzner_dns_zone }}`].id | [0]"
-  when: state == "present"
 
 - name: Get existing DNS records
   uri:
@@ -45,7 +43,6 @@
   set_fact:
     root_name: "{% if hetzner_use_root_domain %}@{% else %}{{ hetzner_dns_name }}{% endif %}"
     wildcard_name: "{% if hetzner_use_root_domain %}*{% else %}*.{{ hetzner_dns_name }}{% endif %}"
-  when: state == "present"
 
 - name: Check if records exist
   set_fact:
@@ -112,8 +109,9 @@
     method: DELETE
     headers:
       Auth-API-Token: "{{ hetzner_dns_token }}"
+    status_code: [200, 404]  # Accept both success and not found
   vars:
-    record_id: "{{ records_response.json.records | json_query(query_template | format(item.value)) | first }}"
+    record_id: "{{ records_response.json.records | json_query(query_template | format(item.value)) | first | default('0') }}"
     query_template: "[?zone_id=='{{ zone_id }}' && name=='%s'].id | [0]"
   loop:
     - key: root

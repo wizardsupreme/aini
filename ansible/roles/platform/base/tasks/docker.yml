@@ -1,68 +1,87 @@
 ---
 
-- name: Install Python Docker SDK
-  apt:
-    name: 
-      - python3-docker
-      - docker-compose-plugin  # Docker Compose V2
-    state: present
-  become: true
-
-- name: Verify Docker SDK installation
-  command: python3 -c "import docker"
-  changed_when: false
-
-- name: Install required packages for Docker
+- name: Install required packages for Docker repo
   apt:
     name:
-      - docker-ce
-      - docker-ce-cli
-      - containerd.io
-      - python3-docker
-      - docker-compose-plugin
-      - apt-transport-https
       - ca-certificates
       - curl
       - gnupg
+      - apt-transport-https
       - lsb-release
     state: present
+  become: true
 
 - name: Add Docker GPG key
   apt_key:
     url: https://download.docker.com/linux/ubuntu/gpg
     state: present
+  become: true
 
 - name: Add Docker repository
   apt_repository:
     repo: "deb [arch=arm64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
     state: present
+    update_cache: yes
+  become: true
 
-- name: Start and enable Docker service
-  systemd:
-    name: docker
-    state: started
-    enabled: yes
-
-- name: Configure Docker daemon
-  copy:
-    content: |
-      {
-        "experimental": true
-      }
-    dest: /etc/docker/daemon.json
-    mode: '0644'
-  notify: Restart Docker
-
-- name: Add ansible user to docker group
-  user:
-    name: "{{ ansible_user }}"
-    groups: docker
-    append: yes
-
-- name: Remove old docker-compose
+- name: Install Docker packages
   apt:
-    name: docker-compose
-    state: absent
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-compose-plugin
+    state: present
+  become: true
+
+- name: Install uv dependencies
+  apt:
+    name:
+      - python3-venv
+      - build-essential
+      - python3-dev
+      - libyaml-dev  # Required for PyYAML
+      - gcc
+    state: present
+  become: true
+
+- name: Download and install uv
+  shell: |
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+  args:
+    creates: /root/.local/bin/uv
+  become: true
+
+- name: Create symlink for uv
+  file:
+    src: "/root/.local/bin/uv"
+    dest: "/usr/local/bin/uv"
+    state: link
+  become: true
+
+- name: Create Docker SDK virtual environment
+  command: /usr/local/bin/uv venv /opt/docker-venv
+  args:
+    creates: /opt/docker-venv
+  become: true
+
+- name: Install pip in virtual environment
+  command: /opt/docker-venv/bin/python3 -m ensurepip --upgrade
+  become: true
+
+- name: Check if Docker SDK is installed
+  command: /opt/docker-venv/bin/python3 -m pip freeze
+  register: pip_freeze
+  changed_when: false
+  become: true
+
+- name: Install Python Docker SDK in virtual environment
+  command: /usr/local/bin/uv pip install --no-deps docker "docker-compose>=2.0.0" pyyaml
+  environment:
+    VIRTUAL_ENV: /opt/docker-venv
+    PATH: "/opt/docker-venv/bin:/usr/local/bin:/usr/bin:/bin"
+  become: true
+  when: "'docker==' not in pip_freeze.stdout or 'docker-compose==' not in pip_freeze.stdout"
 
 - name: Configure Docker daemon
   copy:
@@ -72,6 +91,7 @@
       }
     dest: /etc/docker/daemon.json
     mode: '0644'
+  become: true
   notify: Restart Docker
 
 - name: Start and enable Docker service
@@ -79,17 +99,24 @@
     name: docker
     state: started
     enabled: yes
+  become: true
 
 - name: Add ansible user to docker group
   user:
     name: "{{ ansible_user }}"
     groups: docker
     append: yes
+  become: true
 
-- name: Verify Docker Compose installation
+- name: Verify Docker SDK installation
+  command: /opt/docker-venv/bin/python3 -c "import docker"
+  changed_when: false
+
+- name: Verify Docker Compose V2 installation
   command: docker compose version
   changed_when: false
 
 - name: Force remove any stuck containers
   shell: docker rm -f $(docker ps -aq) || true
-  changed_when: false 
+  changed_when: false
+  become: true 

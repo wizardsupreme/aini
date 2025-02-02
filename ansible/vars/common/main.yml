@@ -5,7 +5,7 @@ ssh_private_key_file: "~/.ssh/id_ed25519"
 # Hetzner Configuration
 hetzner_ssh_key_name: "smn7818@gmail.com"
 hetzner_server_type: "cax11"
-hetzner_server_image: "ubuntu-24.04"
+hetzner_server_image: "docker-ce"
 hetzner_server_location: "hel1"
 hetzner_enable_ipv6: true
 hetzner_enable_ipv4: true
