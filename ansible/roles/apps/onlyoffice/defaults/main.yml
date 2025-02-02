@@ -1,0 +1,20 @@
+---
+# Whether to configure Nextcloud integration
+configure_nextcloud: true
+
+# Default OnlyOffice Configuration
+onlyoffice_version: latest
+
+# Default Resource Limits
+onlyoffice_resources:
+  memory: 2G
+  cpu_count: 2
+
+# Default Settings
+onlyoffice_settings:
+  default_language: "en"
+  max_file_size: 100
+  enable_cache: true
+
+# JWT Configuration
+onlyoffice_jwt_enabled: true 

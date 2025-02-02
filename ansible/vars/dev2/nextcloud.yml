@@ -1,0 +1,71 @@
+# Apps to install during initial setup
+nextcloud_install_apps:
+  - calendar
+  - contacts
+  - tasks
+  - mail
+  - forms
+  - deck
+  - notes
+  - bookmarks
+
+# Apps to enable after installation (might need additional setup)
+nextcloud_enable_apps:
+  - whiteboard
+  - flow_notifications
+  - circles
+  - groupfolders
+  - photos
+  - memories
+  - cookbook
+  - music
+
+# Apps requiring custom installation
+nextcloud_custom_install_apps:
+  - name: talk
+    description: "Video calls & chat app (installed as spreed)"
+    install_commands:
+      - "php occ app:install spreed --force"
+  - name: onlyoffice
+    description: "OnlyOffice integration for document editing"
+    install_commands:
+      - "docker ps -q -f name=nextcloud-onlyoffice || (echo 'OnlyOffice server not found. Please install OnlyOffice first.' && exit 1)"
+      - "php occ app:install onlyoffice --force"
+      - "php occ config:app:set onlyoffice DocumentServerUrl --value='https://office.{{ onlyoffice_domain }}'"
+      - "php occ config:app:set onlyoffice jwt_secret --value='{{ onlyoffice_jwt_secret }}'"
+      - "php occ config:app:set onlyoffice DefaultEditor --value='true'"
+
+# Performance settings
+nextcloud_php_settings:
+  memory_limit: "512M"
+  upload_limit: "512M"
+  max_execution_time: 300
+  max_input_time: 300
+  apc_shm_size: "128M"
+  opcache_memory_consumption: 128
+  opcache_interned_strings_buffer: 16
+
+# Regional settings
+nextcloud_region:
+  default_phone_region: "US"
+  maintenance_window_start: 1
+
+# Network settings
+nextcloud_trusted_proxies:
+  - "172.16.0.0/12"
+  - "192.168.0.0/16"
+  - "10.0.0.0/8"
+
+# Redis settings
+nextcloud_redis:
+  host: "redis"
+  port: 6379
+
+# Web settings
+nextcloud_web_port: 80  # Currently in role defaults?
+
+# Security headers
+nextcloud_security_headers:
+  sts_seconds: 15552000
+  frame_options: "SAMEORIGIN"
+  content_security_policy: "default-src 'self' 'unsafe-inline' 'unsafe-eval' nextcloud.{{ domain }}; frame-ancestors 'self' nextcloud.{{ domain }}; frame-src 'self' nextcloud.{{ domain }}; img-src 'self' 'unsafe-inline' data: blob: nextcloud.{{ domain }}; media-src 'self' data: blob: nextcloud.{{ domain }}; connect-src 'self' nextcloud.{{ domain }}" 

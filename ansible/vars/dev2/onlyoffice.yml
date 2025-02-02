@@ -1,0 +1,21 @@
+---
+# OnlyOffice Configuration
+onlyoffice_version: latest  # Docker image version
+
+# Network Configuration
+onlyoffice_domain: "office.{{ domain }}"
+
+# Resource Limits (optional)
+onlyoffice_resources:
+  memory: 2G
+  cpu_count: 2
+
+# JWT Configuration
+# Note: JWT secret is in secrets.yml
+onlyoffice_jwt_enabled: true
+
+# Additional Settings (optional)
+onlyoffice_settings:
+  default_language: "en"
+  max_file_size: 100  # MB
+  enable_cache: true 

@@ -34,3 +34,8 @@
     - nextcloud
 
 # Add more CPU-specific apps here
+
+- name: Deploy OnlyOffice
+  import_role:
+    name: apps/onlyoffice
+  tags: ['onlyoffice']

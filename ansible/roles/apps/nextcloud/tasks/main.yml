@@ -25,7 +25,7 @@
     state: present
     pull: "missing"
     remove_orphans: true
-    recreate: always
+    recreate: auto
 
 - name: Wait for Nextcloud to be ready
   uri:
@@ -47,3 +47,42 @@
 - name: Ensure proper permissions
   command: docker exec nextcloud chown -R www-data:www-data /var/www/html
   changed_when: false
+
+- name: Enable required apps
+  command: docker exec -u www-data nextcloud php occ app:enable {{ item }}
+  loop: "{{ nextcloud_enable_apps }}"
+  changed_when: false
+  ignore_errors: yes
+  register: app_enable_results
+
+- name: Display app enable errors
+  debug:
+    msg: "Failed to enable app {{ item.item }}: {{ item.stdout }}"
+  loop: "{{ app_enable_results.results }}"
+  when: item.failed
+
+- name: Update MIME types
+  command: "{{ item }}"
+  loop:
+    - docker exec -u www-data nextcloud php occ maintenance:mimetype:update-js
+    - docker exec -u www-data nextcloud php occ maintenance:mimetype:update-db
+  changed_when: false
+  ignore_errors: yes
+
+- name: Check custom app installation status
+  command: docker exec -u www-data nextcloud php occ app:list --output=json
+  register: app_list
+  changed_when: false
+
+- name: Parse installed apps
+  set_fact:
+    installed_apps: "{{ (app_list.stdout | from_json).enabled }}"
+
+- name: Install custom apps
+  command: docker exec -u www-data nextcloud {{ item.1 }}
+  loop: "{{ nextcloud_custom_install_apps|subelements('install_commands', skip_missing=True) }}"
+  when:
+    - item.1 is search('app:install')
+    - (item.1 | regex_search('app:install ([^ ]+)', '\\1'))[0] not in installed_apps
+  changed_when: false
+  ignore_errors: yes

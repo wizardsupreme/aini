@@ -1,5 +1,4 @@
 ---
-version: '3.8'
 
 services:
   nextcloud:
@@ -24,21 +23,23 @@ services:
       - NEXTCLOUD_DATABASE_USER={{ nextcloud_db_user }}
       - NEXTCLOUD_DATABASE_PASSWORD={{ nextcloud_db_password }}
       - NEXTCLOUD_DATA_DIR=/var/www/html/data
-      - NEXTCLOUD_INSTALL_APPS=calendar,contacts,tasks
+      - NEXTCLOUD_INSTALL_APPS={{ nextcloud_install_apps | join(',') }}
       - NEXTCLOUD_AUTO_INSTALL=yes
       - NEXTCLOUD_TABLE_PREFIX=oc_
       - NEXTCLOUD_UPDATE=1
-      - PHP_MEMORY_LIMIT=512M
-      - PHP_UPLOAD_LIMIT=512M
-      - PHP_MAX_EXECUTION_TIME=300
-      - PHP_MAX_INPUT_TIME=300
-      - PHP_APC_SHM_SIZE=128M
-      - PHP_OPCACHE_MEMORY_CONSUMPTION=128
-      - PHP_OPCACHE_INTERNED_STRINGS_BUFFER=16
+      - PHP_MEMORY_LIMIT={{ nextcloud_php_settings.memory_limit }}
+      - PHP_UPLOAD_LIMIT={{ nextcloud_php_settings.upload_limit }}
+      - PHP_MAX_EXECUTION_TIME={{ nextcloud_php_settings.max_execution_time }}
+      - PHP_MAX_INPUT_TIME={{ nextcloud_php_settings.max_input_time }}
+      - PHP_APC_SHM_SIZE={{ nextcloud_php_settings.apc_shm_size }}
+      - PHP_OPCACHE_MEMORY_CONSUMPTION={{ nextcloud_php_settings.opcache_memory_consumption }}
+      - PHP_OPCACHE_INTERNED_STRINGS_BUFFER={{ nextcloud_php_settings.opcache_interned_strings_buffer }}
       - APACHE_DISABLE_REWRITE_IP=1
-      - TRUSTED_PROXIES=traefik_network
-      - REDIS_HOST=redis
-      - REDIS_HOST_PORT=6379
+      - TRUSTED_PROXIES={{ nextcloud_trusted_proxies | to_json }}
+      - REDIS_HOST={{ nextcloud_redis.host }}
+      - REDIS_HOST_PORT={{ nextcloud_redis.port }}
+      - NEXTCLOUD_DEFAULT_PHONE_REGION={{ nextcloud_region.default_phone_region }}
+      - NEXTCLOUD_MAINTENANCE_WINDOW_START={{ nextcloud_region.maintenance_window_start }}
     networks:
       - traefik_network
       - nextcloud_internal
@@ -64,16 +65,18 @@ services:
       - "traefik.http.middlewares.nextcloud-wellknown.redirectregex.regex=/.well-known/(?:card|cal)dav"
       - "traefik.http.middlewares.nextcloud-wellknown.redirectregex.replacement=/remote.php/dav/"
       # HSTS and security headers
-      - "traefik.http.middlewares.nextcloud-headers.headers.stsSeconds=31536000"
+      - "traefik.http.middlewares.nextcloud-headers.headers.stsSeconds={{ nextcloud_security_headers.sts_seconds }}"
       - "traefik.http.middlewares.nextcloud-headers.headers.stsIncludeSubdomains=true"
       - "traefik.http.middlewares.nextcloud-headers.headers.stsPreload=true"
+      - "traefik.http.middlewares.nextcloud-headers.headers.forceSTSHeader=true"
       # Add these headers
-      - "traefik.http.middlewares.nextcloud-headers.headers.customFrameOptionsValue=SAMEORIGIN"
+      - "traefik.http.middlewares.nextcloud-headers.headers.customFrameOptionsValue={{ nextcloud_security_headers.frame_options }}"
       - "traefik.http.middlewares.nextcloud-headers.headers.customResponseHeaders.X-Robots-Tag=none"
       - "traefik.http.middlewares.nextcloud-headers.headers.customResponseHeaders.X-Download-Options=noopen"
       - "traefik.http.middlewares.nextcloud-headers.headers.customResponseHeaders.X-Permitted-Cross-Domain-Policies=none"
       - "traefik.http.middlewares.nextcloud-headers.headers.customResponseHeaders.Referrer-Policy=no-referrer"
       - "traefik.http.middlewares.nextcloud-secure.headers.contentSecurityPolicy=frame-ancestors 'self' nextcloud.{{ domain }}"
+      - "traefik.http.middlewares.nextcloud-headers.headers.contentSecurityPolicy={{ nextcloud_security_headers.content_security_policy }}"
 
   nextcloud-db:
     image: mariadb:10.6

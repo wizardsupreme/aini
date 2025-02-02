@@ -1,0 +1,29 @@
+services:
+  onlyoffice:
+    image: onlyoffice/documentserver:{{ onlyoffice_version }}
+    container_name: onlyoffice
+    restart: unless-stopped
+    environment:
+      - JWT_SECRET={{ onlyoffice_jwt_secret }}
+      - JWT_ENABLED={{ onlyoffice_jwt_enabled | lower }}
+      - DEFAULT_LANGUAGE={{ onlyoffice_settings.default_language }}
+      - MAX_FILE_SIZE={{ onlyoffice_settings.max_file_size }}
+      - ENABLE_CACHE={{ onlyoffice_settings.enable_cache | lower }}
+    deploy:
+      resources:
+        limits:
+          memory: {{ onlyoffice_resources.memory }}
+          cpus: {{ onlyoffice_resources.cpu_count }}
+    networks:
+      - traefik_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.onlyoffice.rule=Host(`{{ onlyoffice_domain }}`)"
+      - "traefik.http.routers.onlyoffice.entrypoints=websecure"
+      - "traefik.http.routers.onlyoffice.tls.certresolver=letsencrypt"
+      - "traefik.http.services.onlyoffice.loadbalancer.server.port=80"
+
+networks:
+  traefik_network:
+    external: true
+    name: traefik-public 

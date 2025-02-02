@@ -1,0 +1,33 @@
+---
+- name: Create OnlyOffice directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - /opt/onlyoffice
+
+- name: Template configurations
+  template:
+    src: docker-compose.yml.j2
+    dest: /opt/onlyoffice/docker-compose.yml
+    mode: '0644'
+
+- name: Start OnlyOffice
+  community.docker.docker_compose_v2:
+    project_src: /opt/onlyoffice
+    state: present
+    pull: "missing"
+    remove_orphans: true
+    recreate: always
+
+- name: Wait for OnlyOffice to be ready
+  uri:
+    url: "https://{{ onlyoffice_domain }}"
+    validate_certs: yes
+    status_code: 200
+  register: result
+  until: result.status == 200
+  retries: 60
+  delay: 5
+  ignore_errors: yes 
