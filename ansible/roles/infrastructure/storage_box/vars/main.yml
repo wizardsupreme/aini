@@ -1,0 +1,5 @@
+---
+# Map vault variables to their usage names
+storage_box_host: "{{ vault_storage_box_host }}"
+storage_box_user: "{{ vault_storage_box_user }}"
+storage_box_password: "{{ vault_storage_box_password }}" 

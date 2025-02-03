@@ -31,12 +31,21 @@
   delay: 10
   when: server.ansible_job_id is defined
 
-- name: Debug server variable at start of DNS tasks
-  debug:
-    msg: 
-      - "job_result: {{ job_result }}"
-      - "ip: {{ job_result.hcloud_server.ipv4_address }}"
-  when: state == "present"
+- name: Set DNS record configuration
+  set_fact:
+    dns_records:
+      - name: "{% if hetzner_use_root_domain %}@{% else %}{{ hetzner_dns_name }}{% endif %}"
+        type: "A"
+        value: "{{ job_result.hcloud_server.ipv4_address }}"
+        ttl: 300
+      - name: "{% if hetzner_use_root_domain %}*{% else %}*.{{ hetzner_dns_name }}{% endif %}"
+        type: "A"
+        value: "{{ job_result.hcloud_server.ipv4_address }}"
+        ttl: 300
+  when: 
+    - state == "present"
+    - hetzner_dns_zone is defined
+    - server is defined
 
 - name: Configure DNS records
   include_role:
@@ -56,3 +65,7 @@
         ipv4_address: "{{ job_result.hcloud_server.ipv4_address }}"
         server_name: "{{ hetzner_project_name }}-app"
   when: server is defined
+
+- name: Configure mounts
+  include_tasks: mounts.yml
+  when: state == "present"

@@ -1,4 +1,10 @@
 ---
+- name: Deploy Base
+  import_role:
+    name: apps/base
+  tags:
+    - base
+
 - name: Deploy Traefik
   import_role:
     name: apps/traefik
@@ -13,14 +19,12 @@
 - name: Deploy Netdata
   import_role:
     name: apps/netdata
-  tags:
-    - netdata
+  tags: ['netdata']
 
 - name: Deploy Grafana
   import_role:
     name: apps/grafana
-  tags:
-    - grafana
+  tags: ['grafana']
 
 # - name: Deploy N8N
 #   include_role:
@@ -30,8 +34,7 @@
 - name: Deploy Nextcloud
   import_role:
     name: apps/nextcloud
-  tags:
-    - nextcloud
+  tags: ['nextcloud']
 
 # Add more CPU-specific apps here
 

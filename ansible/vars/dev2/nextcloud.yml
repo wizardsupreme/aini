@@ -69,3 +69,5 @@ nextcloud_security_headers:
   sts_seconds: 15552000
   frame_options: "SAMEORIGIN"
   content_security_policy: "default-src 'self' 'unsafe-inline' 'unsafe-eval' nextcloud.{{ domain }}; frame-ancestors 'self' nextcloud.{{ domain }}; frame-src 'self' nextcloud.{{ domain }}; img-src 'self' 'unsafe-inline' data: blob: nextcloud.{{ domain }}; media-src 'self' data: blob: nextcloud.{{ domain }}; connect-src 'self' nextcloud.{{ domain }}" 
+
+nextcloud_storage_box_enabled: true

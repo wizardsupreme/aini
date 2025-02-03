@@ -1,0 +1,5 @@
+---
+# SSH Configuration
+generate_ssh_key: false  # Default to false, override in vars
+ssh_key_type: "ed25519"
+ssh_key_path: "/root/.ssh/id_{{ ssh_key_type }}" 

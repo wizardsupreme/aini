@@ -1,0 +1,48 @@
+---
+- name: Install required packages
+  apt:
+    name: 
+      - cifs-utils
+      - bindfs
+    state: present
+    update_cache: yes
+  become: true
+
+- name: Mount Volumes
+  block:
+    - name: Create mount points
+      file:
+        path: "{{ item.path }}"
+        state: directory
+        mode: '0755'
+        owner: root
+        group: root
+      loop: "{{ mounts }}"
+
+    - name: Configure mounts in fstab
+      ansible.posix.mount:
+        path: "{{ item.path }}"
+        src: "{{ item.src }}"
+        fstype: "{{ item.fstype }}"
+        opts: "{{ item.opts }}"
+        state: "{{ item.state }}"
+      loop: "{{ mounts }}"
+
+    - name: Reload mounts
+      command: mount -a
+      changed_when: false
+
+    - name: Verify mounts
+      shell: "mountpoint {{ item.path }}"
+      loop: "{{ mounts }}"
+      register: mount_wait
+      changed_when: false
+      ignore_errors: true
+
+    - name: Fail if any mount failed
+      fail:
+        msg: "Failed to mount at {{ item.item.path }}"
+      loop: "{{ mount_wait.results }}"
+      when: item.rc != 0 and not item.failed
+  become: true
+  when: mounts is defined 

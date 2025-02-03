@@ -1,0 +1,46 @@
+---
+- name: Download authorized_keys if exists
+  shell: |
+    sftp -P 23 {{ vault_storage_box_user }}@{{ vault_storage_box_host }} << EOF
+    get .ssh/authorized_keys /tmp/storage_box_authorized_keys
+    EOF
+  register: download_result
+  failed_when: false
+  changed_when: false
+
+- name: Create new authorized_keys if doesn't exist
+  copy:
+    content: "{{ vault_ssh_key_public }}\n"
+    dest: /tmp/storage_box_authorized_keys
+    mode: '0600'
+  when: download_result.rc != 0
+
+- name: Add key if not present
+  lineinfile:
+    path: /tmp/storage_box_authorized_keys
+    line: "{{ vault_ssh_key_public }}"
+    create: no
+  when: download_result.rc == 0
+
+- name: Upload authorized_keys
+  shell: |
+    sftp -P 23 {{ vault_storage_box_user }}@{{ vault_storage_box_host }} << EOF
+    mkdir .ssh
+    put /tmp/storage_box_authorized_keys .ssh/authorized_keys
+    EOF
+  register: upload_result
+  failed_when: upload_result.rc != 0 and "Couldn't create directory" not in upload_result.stderr
+
+- name: Clean up temporary file
+  file:
+    path: /tmp/storage_box_authorized_keys
+    state: absent
+
+- name: Create server directory
+  shell: |
+    sftp -P 23 {{ vault_storage_box_user }}@{{ vault_storage_box_host }} << EOF
+    mkdir {{ app_server_hostname }}
+    EOF
+  register: mkdir_result
+  failed_when: mkdir_result.rc != 0 and "Couldn't create directory" not in mkdir_result.stderr
+  changed_when: mkdir_result.rc == 0 

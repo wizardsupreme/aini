@@ -1,0 +1,15 @@
+---
+# Storage Box Configuration
+storage_box_name: "{{ vault_storage_box_user }}"
+storage_box_enabled: true
+storage_box_port: 23
+storage_box_mount:
+  path: "/mnt/{{ vault_storage_box_user }}"
+  src: "//{{ vault_storage_box_user }}.your-storagebox.de/{{ remote_path }}"
+  remote_path: "{{ app_server_hostname }}"
+  fstype: "cifs"
+  opts: "username={{ vault_storage_box_user }},password={{ vault_storage_box_password }},iocharset=utf8,file_mode=0770,dir_mode=0770,vers=3.0,_netdev,auto,nofail"
+  owner: "www-data"
+  group: "www-data"
+  mode: "0750"
+  state: "mounted" 

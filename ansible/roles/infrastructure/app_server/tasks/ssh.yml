@@ -1,0 +1,42 @@
+---
+
+- name: Configure SSH
+  block:
+    - name: Ensure .ssh directory exists
+      file:
+        path: /root/.ssh
+        state: directory
+        mode: '0700'
+        owner: root
+        group: root
+
+    - name: Copy SSH private key
+      copy:
+        content: "{{ vault_ssh_key_private }}"
+        dest: "/root/.ssh/id_{{ ssh_key_type }}"
+        mode: '0600'
+        owner: root
+        group: root
+
+    - name: Copy SSH public key
+      copy:
+        content: "{{ vault_ssh_key_public }}"
+        dest: "/root/.ssh/id_{{ ssh_key_type }}.pub"
+        mode: '0644'
+        owner: root
+        group: root
+
+    - name: Configure SSH hosts
+      community.general.ssh_config:
+        user: root
+        host: "{{ item.host }}"
+        state: present
+        options:
+          Port: "{{ item.port }}"
+          User: "{{ item.user }}"
+          IdentityFile: "{{ item.identity_file }}"
+          StrictHostKeyChecking: "no"
+      loop: "{{ ssh_hosts }}"
+      when: ssh_hosts is defined
+
+

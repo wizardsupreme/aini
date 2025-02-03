@@ -1,5 +1,29 @@
 ---
-- name: Create Nextcloud directories
+- name: Create www-data user
+  user:
+    name: www-data
+    uid: 33
+    group: www-data
+    system: yes
+    shell: /usr/sbin/nologin
+    home: /var/www
+  become: true
+
+- name: Create www-data group
+  group:
+    name: www-data
+    gid: 33
+    system: yes
+  become: true
+
+- name: Add root to www-data group
+  user:
+    name: root
+    groups: www-data
+    append: yes
+  become: true
+
+- name: Create Nextcloud config directories
   file:
     path: "{{ item }}"
     state: directory
@@ -7,6 +31,27 @@
   loop:
     - /opt/nextcloud
     - /opt/nextcloud/config
+    - /opt/nextcloud/php
+    - /opt/nextcloud/data
+  become: true
+
+- name: Create Nextcloud data directory with proper permissions
+  file:
+    path: /opt/nextcloud/data
+    state: directory
+    mode: '0750'
+    owner: www-data
+    group: www-data
+  become: true
+
+# - name: Create .ncdata file
+#   copy:
+#     content: "# Nextcloud data directory"
+#     dest: "{{ storage_box_mount.path }}/nextcloud/.ncdata"
+#     mode: '0640'  # More restrictive but still allows www-data to read
+#     owner: www-data 
+#     group: www-data
+#   become: true
 
 - name: Template configurations
   template:
@@ -43,10 +88,6 @@
   debug:
     var: result
   when: result.failed
-
-- name: Ensure proper permissions
-  command: docker exec nextcloud chown -R www-data:www-data /var/www/html
-  changed_when: false
 
 - name: Enable required apps
   command: docker exec -u www-data nextcloud php occ app:enable {{ item }}
@@ -86,3 +127,24 @@
     - (item.1 | regex_search('app:install ([^ ]+)', '\\1'))[0] not in installed_apps
   changed_when: false
   ignore_errors: yes
+
+- name: Restart Nextcloud container
+  community.docker.docker_compose_v2:
+    project_src: /opt/nextcloud
+    services: 
+      - nextcloud
+    state: present
+    recreate: always
+
+- name: Create PHP config directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0777'  # Temporarily permissive for container setup
+    owner: root
+    group: root
+  loop:
+    - /opt/nextcloud
+    - /opt/nextcloud/config
+    - /opt/nextcloud/php
+  become: true

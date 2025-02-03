@@ -1,0 +1,7 @@
+{% for host in ssh_hosts %}
+Host {{ host.host }}
+    Port {{ host.port }}
+    User {{ host.user }}
+    IdentityFile {{ host.identity_file }}
+    StrictHostKeyChecking no
+{% endfor %} 

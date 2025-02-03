@@ -1,0 +1,8 @@
+---
+# Mount Configuration
+mounts:
+  - path: "{{ storage_box_mount.path }}"
+    src: "{{ vault_storage_box_user }}@{{ vault_storage_box_host }}:{{ storage_box_mount.remote_path }}"
+    fstype: "{{ storage_box_mount.fstype }}"
+    opts: "{{ storage_box_mount.opts }}"
+    state: "{{ storage_box_mount.state }}"

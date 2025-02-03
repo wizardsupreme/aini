@@ -1,0 +1,12 @@
+# SSH Configuration
+generate_ssh_key: true
+ssh_key_type: "ed25519"
+app_server_ssh_key_path: "/root/.ssh/id_{{ ssh_key_type }}"  # Base path for the key
+app_server_ssh_key_pub: "{{ app_server_ssh_key_path }}.pub"  # Public key path
+
+ssh_hosts:
+  - host: "{{ vault_storage_box_host }}"
+    port: 23
+    user: "{{ vault_storage_box_user }}"
+    identity_file: "/root/.ssh/id_{{ ssh_key_type }}"
+

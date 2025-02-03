@@ -1,0 +1,43 @@
+---
+- name: Install sshfs
+  apt:
+    name: sshfs
+    state: present
+    update_cache: yes
+  become: true
+
+- name: Mount Volumes
+  block:
+    - name: Create mount points
+      file:
+        path: "{{ item.path }}"
+        state: directory
+        mode: '0755'
+        owner: root
+        group: root
+      loop: "{{ mounts }}"
+
+    - name: Mount volumes
+      ansible.posix.mount:
+        path: "{{ item.path }}"
+        src: "{{ item.src }}"
+        fstype: "{{ item.fstype }}"
+        opts: "{{ item.opts }}"
+        state: "{{ item.state }}"
+      loop: "{{ mounts }}"
+
+    - name: Verify mounts
+      wait_for:
+        path: "{{ item.path }}"
+        state: mounted
+        timeout: 30
+      loop: "{{ mounts }}"
+      register: mount_wait
+
+    - name: Fail if any mount failed
+      fail:
+        msg: "Failed to mount at {{ item.item.path }}"
+      loop: "{{ mount_wait.results }}"
+      when: not item.completed
+  become: true
+  when: mounts is defined 

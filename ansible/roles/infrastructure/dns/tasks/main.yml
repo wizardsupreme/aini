@@ -1,29 +1,58 @@
 ---
-- name: Create DNS record
-  hcloud_dns_record:
-    api_token: "{{ hetzner_token }}"
-    zone_id: "{{ hetzner_dns_zone }}"
-    type: "{{ item.type }}"
-    name: "{{ item.name }}"
-    value: "{{ item.value }}"
-    ttl: "{{ item.ttl | default(3600) }}"
-    state: present
-  loop: "{{ dns_records }}"
-  tags: dns
+- name: Verify DNS token is available
+  assert:
+    that:
+      - hetzner_dns_token is defined
+      - hetzner_dns_token | length > 0
+    fail_msg: "hetzner_dns_token is required for DNS management"
 
-- name: Configure Hetzner DNS records
+- name: Get DNS zone ID
+  uri:
+    url: "https://dns.hetzner.com/api/v1/zones"
+    method: GET
+    headers:
+      Auth-API-Token: "{{ hetzner_dns_token }}"
+  register: zones_response
+
+- name: Set zone_id fact
+  set_fact:
+    zone_id: "{{ zones_response.json.zones | json_query(query) }}"
+  vars:
+    query: "[?name==`{{ hetzner_dns_zone }}`].id | [0]"
+
+- name: Get existing records
+  uri:
+    url: "https://dns.hetzner.com/api/v1/records?zone_id={{ zone_id }}"
+    method: GET
+    headers:
+      Auth-API-Token: "{{ hetzner_dns_token }}"
+  register: existing_records
+
+- name: Update existing records
+  uri:
+    url: "https://dns.hetzner.com/api/v1/records/{{ record_id }}"
+    method: PUT
+    headers:
+      Auth-API-Token: "{{ hetzner_dns_token }}"
+      Content-Type: "application/json"
+    body_format: json
+    body: "{{ {'zone_id': zone_id, 'name': item.name, 'type': item.type, 'value': item.value, 'ttl': item.ttl} | to_json }}"
+    status_code: [200, 201]
+  vars:
+    record_id: "{{ (existing_records.json.records | selectattr('name', 'equalto', item.name) | selectattr('type', 'equalto', item.type) | list)[0].id }}"
+  loop: "{{ dns_records }}"
+  when: existing_records.json.records | selectattr('name', 'equalto', item.name) | selectattr('type', 'equalto', item.type) | list | length > 0
+
+- name: Create new records
   uri:
     url: "https://dns.hetzner.com/api/v1/records"
     method: POST
     headers:
       Auth-API-Token: "{{ hetzner_dns_token }}"
+      Content-Type: "application/json"
     body_format: json
-    body:
-      zone_id: "{{ hetzner_dns_zone }}"
-      name: "{{ item.name }}"
-      type: "{{ item.type }}"
-      value: "{{ item.value }}"
-      ttl: "{{ item.ttl | default(3600) }}"
+    body: "{{ {'zone_id': zone_id, 'name': item.name, 'type': item.type, 'value': item.value, 'ttl': item.ttl} | to_json }}"
     status_code: [200, 201]
   loop: "{{ dns_records }}"
+  when: existing_records.json.records | selectattr('name', 'equalto', item.name) | selectattr('type', 'equalto', item.type) | list | length == 0
   tags: dns 

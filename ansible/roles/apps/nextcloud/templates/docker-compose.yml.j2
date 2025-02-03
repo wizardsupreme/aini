@@ -6,9 +6,10 @@ services:
     container_name: nextcloud
     restart: unless-stopped
     volumes:
-      - nextcloud-html:/var/www/html
+      - nextcloud:/var/www/html
       - nextcloud-config:/var/www/html/config
       - nextcloud-apps:/var/www/html/custom_apps
+      - /opt/nextcloud/data:/var/www/html/data
     environment:
       - MYSQL_HOST=nextcloud-db
       - MYSQL_DATABASE={{ nextcloud_db_name }}
@@ -40,6 +41,9 @@ services:
       - REDIS_HOST_PORT={{ nextcloud_redis.port }}
       - NEXTCLOUD_DEFAULT_PHONE_REGION={{ nextcloud_region.default_phone_region }}
       - NEXTCLOUD_MAINTENANCE_WINDOW_START={{ nextcloud_region.maintenance_window_start }}
+      - PHP_SESSION_HANDLER=redis
+      - PHP_SESSION_SAVE_HANDLER=redis
+      - PHP_SESSION_SAVE_PATH="tcp://{{ nextcloud_redis.host }}:{{ nextcloud_redis.port }}"
     networks:
       - traefik_network
       - nextcloud_internal
@@ -77,6 +81,9 @@ services:
       - "traefik.http.middlewares.nextcloud-headers.headers.customResponseHeaders.Referrer-Policy=no-referrer"
       - "traefik.http.middlewares.nextcloud-secure.headers.contentSecurityPolicy=frame-ancestors 'self' nextcloud.{{ domain }}"
       - "traefik.http.middlewares.nextcloud-headers.headers.contentSecurityPolicy={{ nextcloud_security_headers.content_security_policy }}"
+    command: >
+      bash -c "
+      apache2-foreground"
 
   nextcloud-db:
     image: mariadb:10.6
@@ -84,6 +91,8 @@ services:
     restart: unless-stopped
     command: --transaction-isolation=READ-COMMITTED --log-bin=ROW
     volumes:
+      # Database files - stored in /var/lib/docker/volumes/nextcloud-db/_data
+      # Contains all MariaDB data files
       - nextcloud-db:/var/lib/mysql
     environment:
       - MYSQL_ROOT_PASSWORD={{ nextcloud_db_root_password }}
@@ -101,10 +110,10 @@ services:
       - nextcloud_internal
 
 volumes:
-  nextcloud-html:
-  nextcloud-config:
-  nextcloud-apps:
-  nextcloud-db:
+  nextcloud:        # Managed by Docker, stored in /var/lib/docker/volumes/
+  nextcloud-config: # Managed by Docker, stored in /var/lib/docker/volumes/
+  nextcloud-apps:   # Managed by Docker, stored in /var/lib/docker/volumes/
+  nextcloud-db:     # Managed by Docker, stored in /var/lib/docker/volumes/
 
 networks:
   traefik_network:

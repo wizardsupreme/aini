@@ -1,0 +1,15 @@
+---
+- name: Include SSH configuration
+  include_tasks: ssh.yml
+
+- name: Configure system settings
+  sysctl:
+    name: vm.overcommit_memory
+    value: '1'
+    state: present
+    sysctl_set: yes
+    reload: yes
+  become: true
+
+- name: Include mount tasks
+  include_tasks: mounts.yml

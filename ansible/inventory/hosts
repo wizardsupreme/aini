@@ -1,2 +1,5 @@
+[provisioners]
+localhost ansible_connection=local
+
 [app_servers]
 aini-app ansible_host=37.27.92.160 ansible_user=root

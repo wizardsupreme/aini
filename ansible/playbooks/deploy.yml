@@ -6,28 +6,26 @@
     - include_tasks: includes/load_vars.yml
       tags: ['always']
 
-  vars:
-    action: "{{ action | default('create') }}"
-
 # Provisioning
 - name: Provision Infrastructure
-  hosts: localhost
+  hosts: provisioners
   gather_facts: true
   roles:
     - role: infrastructure/ssh_key
       tags: ssh_key
+    - role: infrastructure/storage_box
+      tags: storage_box
     - role: infrastructure/app_server
       tags: app_server
 
-# Apps
+# Apps (including base)
 - name: Manage Applications
   hosts: app_servers
   gather_facts: true
-  tags: ['apps']
   pre_tasks:
     - include_tasks: includes/load_vars.yml
-      tags: ['always']
+      tags: ['apps']
   tasks:
     - name: Include apps tasks
       include_tasks: includes/apps.yml
-      tags: ['apps','traefik','netdata','grafana','nextcloud','onlyoffice']
+      tags: ['base','traefik','netdata','grafana','nextcloud','onlyoffice']

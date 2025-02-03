@@ -10,11 +10,3 @@ nextcloud_db_name: "nextcloud"
 nextcloud_db_user: "nextcloud"
 nextcloud_db_password: "{{ nextcloud_db_password }}"
 nextcloud_db_root_password: "{{ nextcloud_db_root_password }}"
-
-# Storage Box settings (SFTP)
-storage_box_enabled: true
-storage_box_host: "{{ storage_box_host }}"
-storage_box_user: "{{ storage_box_user }}"
-storage_box_password: "{{ storage_box_password }}"
-storage_box_root: "/home/{{ storage_box_user }}"
-storage_box_port: 22 

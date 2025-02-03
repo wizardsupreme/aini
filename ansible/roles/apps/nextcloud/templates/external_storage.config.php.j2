@@ -12,20 +12,5 @@ $CONFIG = array (
       'writable' => true,
     ),
   ),
-{% if storage_box_enabled %}
-  // External storage configuration
-  'external_storage' => array(
-    'enabled' => true,
-    'allow_user_mounting' => true,
-  ),
-  'external_storage_backends' => array(
-    'sftp' => array(
-      'host' => '{{ storage_box_host }}',
-      'user' => '{{ storage_box_user }}',
-      'password' => '{{ storage_box_password }}',
-      'root' => '{{ storage_box_root }}',
-      'port' => {{ storage_box_port }},
-    ),
-  ),
-{% endif %}
+  'files_external_allow_create_new_local' => 'true',
 ); 

@@ -1,2 +1,4 @@
 # group_vars/all.yml
 ---
+# Storage Box Configuration
+app_server_hostname: "{{ hetzner_project_name }}-app"  # Matches the server name pattern

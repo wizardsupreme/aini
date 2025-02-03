@@ -23,7 +23,13 @@ $CONFIG = array (
   'overwritehost' => 'nextcloud.{{ domain }}',
   
   // Performance tuning
-  'memcache.local' => '\\OC\\Memcache\\APCu',
+  'memcache.local' => '\\OC\\Memcache\\Redis',
+  'memcache.distributed' => '\\OC\\Memcache\\Redis',
+  'memcache.locking' => '\\OC\\Memcache\\Redis',
+  'redis' => [
+     'host' => '{{ nextcloud_redis.host }}',
+     'port' => {{ nextcloud_redis.port }},
+  ],
   
   // Recommended security settings
   'debug' => false,
@@ -31,4 +37,16 @@ $CONFIG = array (
   'logfile' => '/var/www/html/data/nextcloud.log',
   'loglevel' => 2,
   'maintenance' => false,
+  'apps_paths' => array(
+    array(
+      'path' => '/var/www/html/apps',
+      'url' => '/apps',
+      'writable' => false,
+    ),
+    array(
+      'path' => '/var/www/html/custom_apps',
+      'url' => '/custom_apps',
+      'writable' => true,
+    ),
+  ),
 ); 
