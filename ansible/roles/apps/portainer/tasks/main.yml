@@ -1,0 +1,22 @@
+---
+- name: Create Portainer directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0750'
+  loop:
+    - "/opt/portainer"
+
+- name: Template docker-compose.yml
+  template:
+    src: docker-compose.yml.j2
+    dest: /opt/portainer/docker-compose.yml
+    mode: '0644'
+
+- name: Deploy Portainer
+  community.docker.docker_compose_v2:
+    project_src: /opt/portainer
+    state: present
+    pull: "missing"
+    remove_orphans: true
+    recreate: always 

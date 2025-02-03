@@ -1,0 +1,39 @@
+---
+version: '3.8'
+
+services:
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:${CADVISOR_VERSION:-latest}
+    container_name: cadvisor
+    hostname: {{ inventory_hostname }}
+    restart: unless-stopped
+    privileged: true
+    ports:
+      - "8080:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    networks:
+      traefik-public:
+        aliases:
+          - cadvisor
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik-public
+      - traefik.http.routers.cadvisor.rule=Host(`cadvisor.{{ domain }}`)
+      - traefik.http.routers.cadvisor.service=cadvisor
+      - traefik.http.services.cadvisor.loadbalancer.server.port=8080
+      - traefik.http.routers.cadvisor.entrypoints=websecure
+      - traefik.http.routers.cadvisor.middlewares=https-redirect
+      - traefik.http.routers.cadvisor.tls=true
+      - traefik.http.routers.cadvisor.tls.certresolver=production
+
+networks:
+  traefik-public:
+    external: true 

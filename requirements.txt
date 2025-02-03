@@ -24,3 +24,5 @@ flake8>=6.0.0
 # Pre-commit
 pre-commit>=3.5.0
 detect-secrets>=1.5.0
+
+dnspython

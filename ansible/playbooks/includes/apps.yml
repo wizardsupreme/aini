@@ -21,10 +21,20 @@
     name: apps/netdata
   tags: ['netdata']
 
+- name: Deploy Portainer
+  import_role:
+    name: apps/portainer
+  tags: ['portainer']
+
 - name: Deploy Grafana
   import_role:
     name: apps/grafana
   tags: ['grafana']
+
+- name: Deploy cAdvisor
+  import_role:
+    name: apps/cadvisor
+  tags: ['cadvisor']
 
 # - name: Deploy N8N
 #   include_role:

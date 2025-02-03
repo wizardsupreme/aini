@@ -6,22 +6,17 @@ services:
     environment:
       - JWT_SECRET={{ onlyoffice_jwt_secret }}
       - JWT_ENABLED={{ onlyoffice_jwt_enabled | lower }}
-      - DEFAULT_LANGUAGE={{ onlyoffice_settings.default_language }}
-      - MAX_FILE_SIZE={{ onlyoffice_settings.max_file_size }}
-      - ENABLE_CACHE={{ onlyoffice_settings.enable_cache | lower }}
-      - WOPI_ENABLED=true
-      - FILE_CONVERTER_PATH=/var/lib/onlyoffice/documentserver/App_Data/cache/files
-      - SERVICES_PORT=8000
-      - EXAMPLE_PORT=3000
-      - DOCSERVICE_PORT=8000
       - JWT_HEADER=AuthorizationJWT
       - GENERATE_FONTS=true
-      - STORAGE_PATH=/var/www/onlyoffice/Data
+      - STORAGE_PATH=/var/lib/onlyoffice/documentserver/App_Data/cache/files
       - STORAGE_FOLDER=files
-      - ALLOWED_HOSTS=nextcloud.{{ domain }},office.{{ domain }}
+      - ALLOWED_HOSTS=*
       - USE_UNAUTHORIZED_STORAGE=true
       - DOCKER_ENABLED=true
       - FILE_PERMISSIONS=666
+      - WOPI_ENABLED=false
+      - LOG_LEVEL=DEBUG
+      - JWT_OUTBOUND=true
     deploy:
       resources:
         limits:

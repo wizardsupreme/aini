@@ -1,0 +1,23 @@
+---
+- name: Create cAdvisor directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - /opt/cadvisor
+    - /opt/cadvisor/config
+
+- name: Template docker-compose.yml
+  template:
+    src: docker-compose.yml.j2
+    dest: /opt/cadvisor/docker-compose.yml
+    mode: '0644'
+
+- name: Deploy cAdvisor
+  community.docker.docker_compose_v2:
+    project_src: /opt/cadvisor
+    state: present
+    pull: "missing"
+    remove_orphans: true
+    recreate: always 
