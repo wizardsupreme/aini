@@ -6,10 +6,9 @@ services:
     container_name: nextcloud
     restart: unless-stopped
     volumes:
-      - nextcloud:/var/www/html
+      - nextcloud-html:/var/www/html
       - nextcloud-config:/var/www/html/config
       - nextcloud-apps:/var/www/html/custom_apps
-      - /opt/nextcloud/data:/var/www/html/data
     environment:
       - MYSQL_HOST=nextcloud-db
       - MYSQL_DATABASE={{ nextcloud_db_name }}
@@ -110,7 +109,7 @@ services:
       - nextcloud_internal
 
 volumes:
-  nextcloud:        # Managed by Docker, stored in /var/lib/docker/volumes/
+  nextcloud-html:        # Managed by Docker, stored in /var/lib/docker/volumes/
   nextcloud-config: # Managed by Docker, stored in /var/lib/docker/volumes/
   nextcloud-apps:   # Managed by Docker, stored in /var/lib/docker/volumes/
   nextcloud-db:     # Managed by Docker, stored in /var/lib/docker/volumes/

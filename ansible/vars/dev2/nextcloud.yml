@@ -11,6 +11,10 @@ nextcloud_install_apps:
 
 # Apps to enable after installation (might need additional setup)
 nextcloud_enable_apps:
+  - onlyoffice
+  - files
+  - files_sharing
+  - viewer
   - whiteboard
   - flow_notifications
   - circles
@@ -29,11 +33,27 @@ nextcloud_custom_install_apps:
   - name: onlyoffice
     description: "OnlyOffice integration for document editing"
     install_commands:
-      - "docker ps -q -f name=nextcloud-onlyoffice || (echo 'OnlyOffice server not found. Please install OnlyOffice first.' && exit 1)"
+      - "docker ps -q -f name=onlyoffice || (echo 'OnlyOffice server not found. Please install OnlyOffice first.' && exit 1)"
       - "php occ app:install onlyoffice --force"
-      - "php occ config:app:set onlyoffice DocumentServerUrl --value='https://office.{{ onlyoffice_domain }}'"
+    config_commands:
+      - "php occ config:app:set onlyoffice DocumentServerUrl --value='https://office.{{ domain }}'"
+      - "php occ config:app:set onlyoffice DocumentServerInternalUrl --value='http://onlyoffice/'"
+      - "php occ config:app:set onlyoffice StorageUrl --value='https://nextcloud.{{ domain }}'"
       - "php occ config:app:set onlyoffice jwt_secret --value='{{ onlyoffice_jwt_secret }}'"
-      - "php occ config:app:set onlyoffice DefaultEditor --value='true'"
+      - "php occ config:app:set onlyoffice verify_peer_off --value='true'"
+      - "php occ config:app:set onlyoffice sameTab --value='true'"
+      - "php occ config:app:set onlyoffice preview --value='true'"
+      - "php occ config:app:set onlyoffice customization --value='{\"feedback\":false,\"goback\":false,\"forcesave\":false}'"
+      - "php occ config:app:set onlyoffice permissions --value='{\"download\":true,\"print\":true,\"edit\":true}'"
+      - "php occ config:system:set defaultapp-odt --value='onlyoffice' --type=string"
+      - "php occ config:system:set defaultapp-docx --value='onlyoffice' --type=string"
+      - "php occ config:system:set defaultapp-xlsx --value='onlyoffice' --type=string"
+      - "php occ config:system:set defaultapp-pptx --value='onlyoffice' --type=string"
+      - "php occ config:app:set onlyoffice defFormats --value='{\"csv\":\"true\",\"doc\":\"true\",\"docm\":\"true\",\"docx\":\"true\",\"dotx\":\"true\",\"epub\":\"true\",\"html\":\"true\",\"odp\":\"true\",\"ods\":\"true\",\"odt\":\"true\",\"odg\":\"true\",\"pdf\":\"true\",\"potm\":\"true\",\"potx\":\"true\",\"ppsm\":\"true\",\"ppsx\":\"true\",\"ppt\":\"true\",\"pptm\":\"true\",\"pptx\":\"true\",\"rtf\":\"true\",\"txt\":\"true\",\"xls\":\"true\",\"xlsm\":\"true\",\"xlsx\":\"true\",\"xltm\":\"true\",\"xltx\":\"true\"}'"
+      - "php occ config:app:set onlyoffice editFormats --value='{\"csv\":\"true\",\"odp\":\"true\",\"ods\":\"true\",\"odt\":\"true\",\"odg\":\"true\",\"rtf\":\"true\",\"txt\":\"true\"}'"
+      - "php occ config:system:set defaultapp-odg --value='onlyoffice' --type=string"
+      - "php occ config:app:set onlyoffice logging --value='true'"
+      - "php occ config:app:set onlyoffice logging_level --value='DEBUG'"
 
 # Performance settings
 nextcloud_php_settings:
@@ -68,6 +88,4 @@ nextcloud_web_port: 80  # Currently in role defaults?
 nextcloud_security_headers:
   sts_seconds: 15552000
   frame_options: "SAMEORIGIN"
-  content_security_policy: "default-src 'self' 'unsafe-inline' 'unsafe-eval' nextcloud.{{ domain }}; frame-ancestors 'self' nextcloud.{{ domain }}; frame-src 'self' nextcloud.{{ domain }}; img-src 'self' 'unsafe-inline' data: blob: nextcloud.{{ domain }}; media-src 'self' data: blob: nextcloud.{{ domain }}; connect-src 'self' nextcloud.{{ domain }}" 
-
-nextcloud_storage_box_enabled: true
+  content_security_policy: "default-src 'self' 'unsafe-inline' 'unsafe-eval' nextcloud.{{ domain }} office.{{ domain }}; script-src 'self' 'unsafe-inline' 'unsafe-eval' office.{{ domain }}; frame-ancestors 'self' nextcloud.{{ domain }} office.{{ domain }}; frame-src 'self' nextcloud.{{ domain }} office.{{ domain }}; img-src 'self' 'unsafe-inline' data: blob: nextcloud.{{ domain }} office.{{ domain }}; media-src 'self' data: blob: nextcloud.{{ domain }} office.{{ domain }}; connect-src 'self' nextcloud.{{ domain }} office.{{ domain }}"

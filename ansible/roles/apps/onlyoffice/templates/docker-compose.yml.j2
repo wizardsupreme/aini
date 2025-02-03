@@ -9,6 +9,19 @@ services:
       - DEFAULT_LANGUAGE={{ onlyoffice_settings.default_language }}
       - MAX_FILE_SIZE={{ onlyoffice_settings.max_file_size }}
       - ENABLE_CACHE={{ onlyoffice_settings.enable_cache | lower }}
+      - WOPI_ENABLED=true
+      - FILE_CONVERTER_PATH=/var/lib/onlyoffice/documentserver/App_Data/cache/files
+      - SERVICES_PORT=8000
+      - EXAMPLE_PORT=3000
+      - DOCSERVICE_PORT=8000
+      - JWT_HEADER=AuthorizationJWT
+      - GENERATE_FONTS=true
+      - STORAGE_PATH=/var/www/onlyoffice/Data
+      - STORAGE_FOLDER=files
+      - ALLOWED_HOSTS=nextcloud.{{ domain }},office.{{ domain }}
+      - USE_UNAUTHORIZED_STORAGE=true
+      - DOCKER_ENABLED=true
+      - FILE_PERMISSIONS=666
     deploy:
       resources:
         limits:
@@ -16,6 +29,11 @@ services:
           cpus: {{ onlyoffice_resources.cpu_count }}
     networks:
       - traefik_network
+      - nextcloud_internal
+    volumes:
+      - onlyoffice_logs:/var/log/onlyoffice
+      - onlyoffice_data:/var/www/onlyoffice/Data
+      - onlyoffice_lib:/var/lib/onlyoffice
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.onlyoffice.rule=Host(`{{ onlyoffice_domain }}`)"
@@ -23,7 +41,15 @@ services:
       - "traefik.http.routers.onlyoffice.tls.certresolver=letsencrypt"
       - "traefik.http.services.onlyoffice.loadbalancer.server.port=80"
 
+volumes:
+  onlyoffice_logs:
+  onlyoffice_data:
+  onlyoffice_lib:
+
 networks:
   traefik_network:
     external: true
-    name: traefik-public 
+    name: traefik-public
+  nextcloud_internal:
+    external: true
+    name: nextcloud_internal 

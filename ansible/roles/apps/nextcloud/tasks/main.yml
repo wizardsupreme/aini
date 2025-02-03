@@ -1,27 +1,27 @@
 ---
-- name: Create www-data user
-  user:
-    name: www-data
-    uid: 33
-    group: www-data
-    system: yes
-    shell: /usr/sbin/nologin
-    home: /var/www
-  become: true
+# - name: Create www-data user
+#   user:
+#     name: www-data
+#     uid: 33
+#     group: www-data
+#     system: yes
+#     shell: /usr/sbin/nologin
+#     home: /var/www
+#   become: true
 
-- name: Create www-data group
-  group:
-    name: www-data
-    gid: 33
-    system: yes
-  become: true
+# - name: Create www-data group
+#   group:
+#     name: www-data
+#     gid: 33
+#     system: yes
+#   become: true
 
-- name: Add root to www-data group
-  user:
-    name: root
-    groups: www-data
-    append: yes
-  become: true
+# - name: Add root to www-data group
+#   user:
+#     name: root
+#     groups: www-data
+#     append: yes
+#   become: true
 
 - name: Create Nextcloud config directories
   file:
@@ -35,14 +35,14 @@
     - /opt/nextcloud/data
   become: true
 
-- name: Create Nextcloud data directory with proper permissions
-  file:
-    path: /opt/nextcloud/data
-    state: directory
-    mode: '0750'
-    owner: www-data
-    group: www-data
-  become: true
+# - name: Create Nextcloud data directory with proper permissions
+#   file:
+#     path: /opt/nextcloud/data
+#     state: directory
+#     mode: '0750'
+#     owner: www-data
+#     group: www-data
+#   become: true
 
 # - name: Create .ncdata file
 #   copy:
@@ -62,7 +62,7 @@
     - { src: docker-compose.yml.j2, dest: docker-compose.yml }
     - { src: config.php.j2, dest: config/config.php }
     - { src: reverse-proxy.config.php.j2, dest: config/reverse-proxy.config.php }
-    - { src: external_storage.config.php.j2, dest: config/external_storage.config.php }
+ #   - { src: external_storage.config.php.j2, dest: config/external_storage.config.php }
 
 - name: Start Nextcloud
   community.docker.docker_compose_v2:
@@ -125,7 +125,15 @@
   when:
     - item.1 is search('app:install')
     - (item.1 | regex_search('app:install ([^ ]+)', '\\1'))[0] not in installed_apps
-  changed_when: false
+  register: app_install_result
+  changed_when: app_install_result.rc == 0
+  ignore_errors: yes
+
+- name: Configure custom apps
+  command: docker exec -u www-data nextcloud {{ item.1 }}
+  loop: "{{ nextcloud_custom_install_apps|subelements('config_commands', skip_missing=True) }}"
+  register: app_config_result
+  changed_when: app_config_result.rc == 0
   ignore_errors: yes
 
 - name: Restart Nextcloud container
