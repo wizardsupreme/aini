@@ -15,8 +15,9 @@
   gather_facts: true
   roles:
     - role: infrastructure/ssh_key
+      tags: ssh_key
     - role: infrastructure/app_server
-      tags: ['provision', 'server']
+      tags: app_server
 
 # Apps
 - name: Manage Applications

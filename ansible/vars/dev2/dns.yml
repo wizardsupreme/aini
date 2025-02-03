@@ -1,0 +1,15 @@
+---
+# Using existing Hetzner DNS configuration from app-server
+# No need to add new secrets as we'll use hetzner_token and hetzner_dns_zone
+
+# DNS Records for app server
+dns_records:
+  - name: "@"
+    type: A
+    value: "{{ ipv4_address }}"  # From app-server job_result
+  
+  - name: "*"
+    type: A
+    value: "{{ ipv4_address }}"  # From app-server job_result
+
+  # Add other DNS records as needed 

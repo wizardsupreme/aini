@@ -38,13 +38,13 @@
       - "ip: {{ job_result.hcloud_server.ipv4_address }}"
   when: state == "present"
 
-- name: Manage DNS records
-  include_tasks: 
-    file: dns.yml
-    apply:
-      vars:
-        ipv4_address: "{{ job_result.hcloud_server.ipv4_address }}"
+- name: Configure DNS records
+  include_role:
+    name: infrastructure/dns
+  vars:
+    ipv4_address: "{{ job_result.hcloud_server.ipv4_address }}"
   when: 
+    - state == "present"
     - hetzner_dns_zone is defined
     - server is defined
 

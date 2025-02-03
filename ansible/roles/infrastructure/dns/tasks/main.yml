@@ -1,0 +1,29 @@
+---
+- name: Create DNS record
+  hcloud_dns_record:
+    api_token: "{{ hetzner_token }}"
+    zone_id: "{{ hetzner_dns_zone }}"
+    type: "{{ item.type }}"
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    ttl: "{{ item.ttl | default(3600) }}"
+    state: present
+  loop: "{{ dns_records }}"
+  tags: dns
+
+- name: Configure Hetzner DNS records
+  uri:
+    url: "https://dns.hetzner.com/api/v1/records"
+    method: POST
+    headers:
+      Auth-API-Token: "{{ hetzner_dns_token }}"
+    body_format: json
+    body:
+      zone_id: "{{ hetzner_dns_zone }}"
+      name: "{{ item.name }}"
+      type: "{{ item.type }}"
+      value: "{{ item.value }}"
+      ttl: "{{ item.ttl | default(3600) }}"
+    status_code: [200, 201]
+  loop: "{{ dns_records }}"
+  tags: dns 
