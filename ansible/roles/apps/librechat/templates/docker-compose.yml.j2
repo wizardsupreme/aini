@@ -1,0 +1,52 @@
+---
+services:
+  librechat:
+    image: ghcr.io/danny-avila/librechat:${LIBRECHAT_VERSION:-{{ librechat_version }}}
+    container_name: librechat
+    hostname: {{ inventory_hostname }}
+    restart: unless-stopped
+    environment:
+      - HOST={{ librechat_host }}
+      - PORT={{ librechat_web_port }}
+      - MONGO_URI=mongodb://mongodb:27017/LibreChat
+      - OPENAI_API_KEY={{ vault_librechat_openai_api_key }}
+      - ANTHROPIC_API_KEY={{ vault_librechat_anthropic_api_key }}
+      - GOOGLE_API_KEY={{ vault_librechat_google_api_key }}
+      - ALLOW_REGISTRATION={{ librechat_features.allow_registration | lower }}
+      - ENABLE_ANTHROPIC={{ librechat_features.enable_anthropic | lower }}
+      - ENABLE_GOOGLE={{ librechat_features.enable_google | lower }}
+      - ENABLE_OPENAI={{ librechat_features.enable_openai | lower }}
+      - JWT_SECRET={{ vault_librechat_jwt_secret }}
+      - DOMAIN_CLIENT=https://{{ librechat_domain }}
+      - DOMAIN_SERVER=https://{{ librechat_domain }}
+    depends_on:
+      - mongodb
+    networks:
+      traefik-public:
+        aliases:
+          - librechat
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik-public
+      - traefik.http.routers.librechat.rule=Host(`{{ librechat_domain }}`)
+      - traefik.http.routers.librechat.service=librechat
+      - traefik.http.services.librechat.loadbalancer.server.port={{ librechat_web_port }}
+      - traefik.http.routers.librechat.entrypoints=websecure
+      - traefik.http.routers.librechat.tls=true
+      - traefik.http.routers.librechat.tls.certresolver=production
+
+  mongodb:
+    image: mongo:${MONGO_VERSION:-{{ mongo_version }}}
+    container_name: librechat-mongodb
+    restart: unless-stopped
+    volumes:
+      - {{ librechat_mongo_data }}:/data/db
+    networks:
+      traefik-public:
+        aliases:
+          - mongodb
+    command: mongod --port {{ mongo_port }}
+
+networks:
+  traefik-public:
+    external: true 

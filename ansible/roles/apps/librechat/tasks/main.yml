@@ -1,0 +1,24 @@
+---
+- name: Create LibreChat directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - /opt/librechat
+    - /opt/librechat/config
+    - /opt/librechat/data/mongodb
+
+- name: Template docker-compose.yml
+  template:
+    src: docker-compose.yml.j2
+    dest: /opt/librechat/docker-compose.yml
+    mode: '0644'
+
+- name: Deploy LibreChat
+  community.docker.docker_compose_v2:
+    project_src: /opt/librechat
+    state: present
+    pull: "missing"
+    remove_orphans: true
+    recreate: always 

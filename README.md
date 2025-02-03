@@ -423,3 +423,24 @@ docker --context aini-apps-server ps --format "table {{.Names}}\t{{.Status}}\t{{
 - Workflow automation
 - System health monitoring
 - User support
+
+## Adding New Application Stacks
+
+When requesting AI assistance to add new application stacks to this Ansible configuration, provide the following details in your prompt:
+
+1. Application name and Docker image details
+2. Required configuration variables and environment settings
+3. Any persistent storage needs
+4. Network requirements (ports, domains)
+5. Dependencies (databases, caches, etc.)
+6. Security considerations (API keys, secrets)
+
+### Example Prompt Template
+
+## Best Practices
+- Use consistent variable naming across files
+- Prefix all sensitive variables with `vault_`
+- Follow existing network configuration patterns
+- Use standard Docker Compose v2 syntax
+- Include appropriate tags for selective deployment
+- Document any special requirements or dependencies

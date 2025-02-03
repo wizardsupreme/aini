@@ -1,0 +1,13 @@
+---
+librechat_version: "latest"
+librechat_web_port: 3080
+librechat_host: "0.0.0.0"
+
+# MongoDB settings
+mongo_version: "latest"
+mongo_port: 27017
+
+# API Keys (you should override these in your vault)
+openai_api_key: ""
+anthropic_api_key: ""
+google_api_key: "" 

@@ -1,0 +1,22 @@
+---
+# LibreChat Configuration
+librechat_version: "latest"
+librechat_web_port: 3080
+librechat_host: "0.0.0.0"
+
+# MongoDB Configuration
+mongo_version: "latest"
+mongo_port: 27017
+
+# Feature Flags
+librechat_features:
+  allow_registration: true
+  enable_anthropic: true
+  enable_google: true
+  enable_openai: true
+
+# Domain Configuration
+librechat_domain: "chat.{{ domain }}"
+
+# MongoDB Data Path
+librechat_mongo_data: "/opt/librechat/data/mongodb" 
