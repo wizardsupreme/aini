@@ -1,0 +1,71 @@
+---
+version: '3.8'
+
+services:
+  nocodb:
+    image: nocodb/nocodb:${NOCODB_VERSION:-{{ nocodb_version }}}
+    container_name: nocodb
+    restart: unless-stopped
+    depends_on:
+      - nocodb-db
+      - nocodb-redis
+    expose:
+      - "8080"
+    environment:
+      NC_DB: "pg://nocodb-db:5432?u={{ nocodb_db_user }}&p={{ nocodb_db_password }}&d={{ nocodb_db_name }}"
+      NC_PUBLIC_URL: "{{ nocodb_settings.nc_public_url }}"
+      NC_AUTH_JWT_SECRET: "{{ nocodb_settings.nc_auth_jwt_secret }}"
+      NC_WORKER_COUNT: "{{ nocodb_settings.nc_worker_count }}"
+      NC_CACHE_STORE: "{{ nocodb_settings.nc_cache_store }}"
+      NC_REDIS_URL: "{{ nocodb_settings.nc_redis_url }}"
+      PORT: 8080
+    volumes:
+      - {{ nocodb_data_path }}:/usr/app/data
+    deploy:
+      resources:
+        limits:
+          memory: {{ nocodb_resources.memory }}
+          cpus: '{{ nocodb_resources.cpu_count }}'
+    networks:
+      - traefik_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.nocodb.rule=Host(`{{ nocodb_domain }}`)"
+      - "traefik.http.routers.nocodb.entrypoints=websecure"
+      - "traefik.http.routers.nocodb.tls.certresolver=letsencrypt"
+      - "traefik.http.services.nocodb.loadbalancer.server.port=8080"
+      - "traefik.http.middlewares.nocodb-headers.headers.customResponseHeaders.X-Robots-Tag=noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex"
+      - "traefik.http.routers.nocodb.middlewares=nocodb-headers"
+
+  nocodb-db:
+    image: postgres:13-alpine
+    container_name: nocodb-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: {{ nocodb_db_name }}
+      POSTGRES_USER: {{ nocodb_db_user }}
+      POSTGRES_PASSWORD: {{ nocodb_db_password }}
+      POSTGRES_ROOT_PASSWORD: {{ nocodb_db_root_password }}
+    volumes:
+      - {{ nocodb_db_data_path }}:/var/lib/postgresql/data
+    networks:
+      - traefik_network
+
+  nocodb-redis:
+    image: redis:{{ nocodb_redis.version }}
+    container_name: nocodb-redis
+    restart: unless-stopped
+    command: redis-server --save 60 1 --loglevel warning
+    volumes:
+      - {{ nocodb_redis_data }}:/data
+    deploy:
+      resources:
+        limits:
+          memory: {{ nocodb_redis.memory }}
+    networks:
+      - traefik_network
+
+networks:
+  traefik_network:
+    external: true
+    name: traefik-public

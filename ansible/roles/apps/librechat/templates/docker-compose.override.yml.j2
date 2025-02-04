@@ -1,0 +1,18 @@
+---
+services:
+  api:
+    networks:
+      - traefik-public
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik-public
+      - traefik.http.routers.librechat.rule=Host(`{{ librechat_domain }}`)
+      - traefik.http.routers.librechat.service=librechat
+      - traefik.http.services.librechat.loadbalancer.server.port=3080
+      - traefik.http.routers.librechat.entrypoints=websecure
+      - traefik.http.routers.librechat.tls=true
+      - traefik.http.routers.librechat.tls.certresolver=production
+
+networks:
+  traefik-public:
+    external: true 

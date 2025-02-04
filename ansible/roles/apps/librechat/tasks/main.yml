@@ -1,4 +1,25 @@
 ---
+- name: Debug secret variables
+  ansible.builtin.debug:
+    msg: 
+      - "JWT Secret: {{ vault_librechat_jwt_secret | truncate(10, true, '') }}..."
+  tags: ['debug']
+
+- name: Validate required variables
+  ansible.builtin.assert:
+    that:
+      - vault_librechat_jwt_secret is defined and vault_librechat_jwt_secret | length > 0
+      - vault_librechat_openai_api_key is defined and vault_librechat_openai_api_key | length > 0
+      - vault_librechat_anthropic_api_key is defined and vault_librechat_anthropic_api_key | length > 0
+      - vault_librechat_google_api_key is defined and vault_librechat_google_api_key | length > 0
+    fail_msg: |
+      Missing required secret variables for LibreChat.
+      Please ensure the following variables are set in secrets.yml:
+        - vault_librechat_jwt_secret
+        - vault_librechat_openai_api_key
+        - vault_librechat_anthropic_api_key
+        - vault_librechat_google_api_key
+
 - name: Create LibreChat directories
   file:
     path: "{{ item }}"
@@ -7,18 +28,56 @@
   loop:
     - /opt/librechat
     - /opt/librechat/config
-    - /opt/librechat/data/mongodb
 
-- name: Template docker-compose.yml
+- name: Remove existing LibreChat directory
+  ansible.builtin.file:
+    path: /opt/librechat
+    state: absent
+  when: librechat_force_clone | default(false) | bool
+
+# - name: Create LibreChat directory
+#   ansible.builtin.file:
+#     path: /opt/librechat
+#     state: directory
+#     mode: '0755'
+
+- name: Clone LibreChat repository
+  ansible.builtin.git:
+    repo: 'https://github.com/danny-avila/LibreChat.git'
+    dest: /opt/librechat
+    version: main
+    force: true
+
+- name: Template environment file
   template:
-    src: docker-compose.yml.j2
-    dest: /opt/librechat/docker-compose.yml
+    src: .env.j2
+    dest: /opt/librechat/.env
+    mode: '0644'
+
+- name: Template docker compose override
+  template:
+    src: docker-compose.override.yml.j2
+    dest: /opt/librechat/docker-compose.override.yml
     mode: '0644'
 
 - name: Deploy LibreChat
   community.docker.docker_compose_v2:
     project_src: /opt/librechat
+    files:
+      - docker-compose.yml
+      - docker-compose.override.yml
     state: present
     pull: "missing"
     remove_orphans: true
-    recreate: always 
+    recreate: always
+
+- name: Check container environment
+  ansible.builtin.command: docker exec librechat env
+  register: container_env
+  changed_when: false
+  tags: ['debug']
+
+- name: Show container environment
+  ansible.builtin.debug:
+    msg: "{{ container_env.stdout_lines }}"
+  tags: ['debug'] 

@@ -14,7 +14,7 @@ librechat_features:
   enable_anthropic: true
   enable_google: true
   enable_openai: true
-
+librechat_force_clone: true
 # Domain Configuration
 librechat_domain: "chat.{{ domain }}"
 

@@ -1,0 +1,9 @@
+---
+nocodb_version: "latest"
+nocodb_web_port: 8080
+nocodb_db_type: "postgres"
+nocodb_data_path: "/opt/nocodb/data"
+nocodb_db_data_path: "/opt/nocodb/db"
+nocodb_resources:
+  memory: "1G"
+  cpu_count: 1 

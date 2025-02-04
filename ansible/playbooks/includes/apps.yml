@@ -57,3 +57,8 @@
   import_role:
     name: apps/librechat
   tags: ['librechat']
+
+- name: Deploy NocoDB
+  import_role:
+    name: apps/nocodb
+  tags: ['nocodb']

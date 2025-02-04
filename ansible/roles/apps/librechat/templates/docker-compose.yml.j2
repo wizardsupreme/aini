@@ -9,6 +9,7 @@ services:
       - HOST={{ librechat_host }}
       - PORT={{ librechat_web_port }}
       - MONGO_URI=mongodb://mongodb:27017/LibreChat
+      - NODE_ENV=production
       - OPENAI_API_KEY={{ vault_librechat_openai_api_key }}
       - ANTHROPIC_API_KEY={{ vault_librechat_anthropic_api_key }}
       - GOOGLE_API_KEY={{ vault_librechat_google_api_key }}
@@ -16,7 +17,7 @@ services:
       - ENABLE_ANTHROPIC={{ librechat_features.enable_anthropic | lower }}
       - ENABLE_GOOGLE={{ librechat_features.enable_google | lower }}
       - ENABLE_OPENAI={{ librechat_features.enable_openai | lower }}
-      - JWT_SECRET={{ vault_librechat_jwt_secret }}
+      - JWT_SECRET={{ vault_librechat_jwt_secret | b64encode }}
       - DOMAIN_CLIENT=https://{{ librechat_domain }}
       - DOMAIN_SERVER=https://{{ librechat_domain }}
     depends_on:
@@ -39,13 +40,13 @@ services:
     image: mongo:${MONGO_VERSION:-{{ mongo_version }}}
     container_name: librechat-mongodb
     restart: unless-stopped
+    command: mongod --noauth
     volumes:
       - {{ librechat_mongo_data }}:/data/db
     networks:
       traefik-public:
         aliases:
           - mongodb
-    command: mongod --port {{ mongo_port }}
 
 networks:
   traefik-public:

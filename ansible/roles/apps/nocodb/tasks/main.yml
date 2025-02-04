@@ -1,0 +1,29 @@
+---
+- name: Create NocoDB directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - /opt/nocodb
+    - "{{ nocodb_data_path }}"
+    - "{{ nocodb_db_data_path }}"
+    - "{{ nocodb_redis_data }}"
+
+- name: Ensure Traefik network exists
+  community.docker.docker_network:
+    name: traefik-public
+    state: present
+
+- name: Template docker-compose.yml
+  template:
+    src: docker-compose.yml.j2
+    dest: /opt/nocodb/docker-compose.yml
+    mode: '0644'
+
+- name: Start NocoDB
+  community.docker.docker_compose_v2:
+    project_src: /opt/nocodb
+    state: present
+    pull: "missing"
+    remove_orphans: true

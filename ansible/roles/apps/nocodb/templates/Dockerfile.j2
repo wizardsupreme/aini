@@ -1,0 +1,15 @@
+FROM nocodb/nocodb:latest
+
+# Install nc-cli globally
+RUN npm install -g nc-cli@latest
+
+# Remove existing symlink if it exists and create new one
+RUN rm -f /usr/local/bin/nc-cli && \
+    if [ -f /usr/local/lib/node_modules/nc-cli/bin/run ]; then \
+        ln -s /usr/local/lib/node_modules/nc-cli/bin/run /usr/local/bin/nc-cli; \
+    elif [ -f /usr/local/lib/node_modules/.bin/nc-cli ]; then \
+        ln -s /usr/local/lib/node_modules/.bin/nc-cli /usr/local/bin/nc-cli; \
+    fi
+
+# Set permissions
+RUN chmod +x /usr/local/bin/nc-cli || true 
