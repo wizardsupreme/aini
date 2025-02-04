@@ -3,11 +3,14 @@
 nocodb_version: "latest"
 nocodb_web_port: 8080
 
-# Database Configuration
-nocodb_db_type: "postgres"  # can be postgres or mysql
-nocodb_db_name: "nocodb"
-nocodb_db_user: "nocodb"
+# Database Configuration (Supabase)
+nocodb_db_type: "postgres"
+nocodb_db_host: "db.ipzxotbigorrlcswdchx.supabase.co"  # Replace with your actual host
+nocodb_db_port: "5432"
+nocodb_db_name: "postgres"  # Using the default Supabase database name
+nocodb_db_user: "postgres"
 nocodb_db_password: "{{ vault_nocodb_db_password }}"
+
 nocodb_db_root_password: "{{ vault_nocodb_db_root_password }}"
 
 # Domain Configuration
