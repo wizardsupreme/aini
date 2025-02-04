@@ -11,12 +11,14 @@ services:
     expose:
       - "8080"
     environment:
-      NC_DB: "pg://{{ nocodb_db_host }}:{{ nocodb_db_port }}?u={{ nocodb_db_user }}&p={{ nocodb_db_password }}&d={{ nocodb_db_name }}"
+      NC_DB: "pg://{{ nocodb_db_host }}:{{ nocodb_db_port }}?u={{ nocodb_db_user }}&p={{ nocodb_db_password }}&d={{ nocodb_db_name }}&pool.min=0&pool.max=5&pool.idleTimeoutMillis=30000"
       NC_PUBLIC_URL: "{{ nocodb_settings.nc_public_url }}"
       NC_AUTH_JWT_SECRET: "{{ nocodb_settings.nc_auth_jwt_secret }}"
       NC_WORKER_COUNT: "{{ nocodb_settings.nc_worker_count }}"
       NC_CACHE_STORE: "{{ nocodb_settings.nc_cache_store }}"
       NC_REDIS_URL: "{{ nocodb_settings.nc_redis_url }}"
+      NC_CONNECTION_TIMEOUT: "60000"
+      NC_POOL_TIMEOUT: "60000"
       PORT: 8080
     volumes:
       - {{ nocodb_data_path }}:/usr/app/data
