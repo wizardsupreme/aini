@@ -1,0 +1,31 @@
+---
+# pgAdmin Configuration
+pgadmin_version: "latest"
+pgadmin_web_port: 80
+pgadmin_data_path: "/opt/pgadmin/data"
+
+# Admin credentials
+pgadmin_default_email: "admin@yaml.space"
+pgadmin_default_password: "{{ vault_pgadmin_password }}"
+
+# Basic Auth credentials
+pgadmin_basic_auth_username: "admin"
+pgadmin_basic_auth_password: "{{ vault_pgadmin_basic_auth_password }}"
+pgadmin_basic_auth_users: "admin:$apr1$kX9kfzRe7$WpzJ89FQXZ3YqK1KzJ.Dk1"  # This is a hash for 'aini185!PgAdminBasicAuth'
+
+# Server configuration
+pgadmin_servers_json: |
+  {
+    "Servers": {
+      "1": {
+        "Name": "YAML Space RDS",
+        "Group": "AWS",
+        "Host": "yaml-space.cbayc4u6a6xt.eu-north-1.rds.amazonaws.com",
+        "Port": 5432,
+        "MaintenanceDB": "postgres",
+        "Username": "postgres",
+        "SSLMode": "prefer",
+        "PassFile": "/pgpassfile"
+      }
+    }
+  } 

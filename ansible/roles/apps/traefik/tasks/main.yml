@@ -8,8 +8,50 @@
   loop:
     - /opt/traefik
     - /opt/traefik/config
+    - /opt/traefik/certificates
     - /opt/traefik/config/dynamic
-    - /opt/traefik/certs
+
+- name: Ensure certificates directory exists with proper permissions
+  file:
+    path: /opt/traefik/certificates
+    state: directory
+    mode: '0750'
+    owner: root
+    group: root
+
+- name: Create ACME file if it doesn't exist
+  file:
+    path: /opt/traefik/certificates/acme.json
+    state: touch
+    mode: '0600'
+    owner: root
+    group: root
+
+- name: Remove old certificates
+  file:
+    path: /opt/traefik/certificates/acme.json
+    state: absent
+  when: traefik_force_cert_renewal | default(false)
+
+- name: Template Traefik static configuration
+  template:
+    src: traefik.yml.j2
+    dest: /opt/traefik/config/traefik.yml
+    mode: '0644'
+
+- name: Template docker-compose.yml
+  template:
+    src: docker-compose.yml.j2
+    dest: /opt/traefik/docker-compose.yml
+    mode: '0644'
+
+- name: Deploy Traefik
+  community.docker.docker_compose_v2:
+    project_src: /opt/traefik
+    state: present
+    pull: "missing"
+    remove_orphans: true
+    recreate: always
 
 - name: Verify domain is available
   assert:
@@ -18,28 +60,15 @@
       - domain | length > 0
     fail_msg: "domain is required for Traefik management"
 
-- name: Template docker-compose.yml
-  template:
-    src: docker-compose.yml.j2
-    dest: /opt/traefik/docker-compose.yml
-    mode: '0644'
-
 - name: Template Traefik configuration
   template:
     src: "{{ item.src }}"
     dest: "/opt/traefik/config/{{ item.dest }}"
     mode: '0644'
   loop:
-    - { src: traefik.yml.j2, dest: traefik.yml }
     - { src: dynamic/middlewares.yml.j2, dest: dynamic/middlewares.yml }
     - { src: dynamic/tls.yml.j2, dest: dynamic/tls.yml }
     - { src: dynamic/services.yml.j2, dest: dynamic/services.yml }
-
-- name: Create acme.json
-  file:
-    path: /opt/traefik/certs/acme.json
-    state: touch
-    mode: '0600'
 
 - name: Create Traefik network
   community.docker.docker_network:
@@ -61,3 +90,7 @@
       - traefik_output is defined
       - traefik_output | length > 0
     fail_msg: "traefik_output did not come up!"
+
+- name: Debug auth string
+  debug:
+    msg: "Auth string: {{ traefik_username }}:{{ traefik_password | password_hash('apr_md5_crypt') }}"

@@ -1,0 +1,10 @@
+---
+authelia_version: "latest"
+
+authelia_users:
+  admin:
+    password: "{{ vault_authelia_admin_password }}"
+    displayname: "Admin User"
+    email: "admin@yaml.space"
+    groups:
+      - admins 

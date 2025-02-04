@@ -1,0 +1,9 @@
+---
+users:
+{% for username, user in authelia_users.items() %}
+  {{ username }}:
+    displayname: {{ user.displayname }}
+    password: {{ user.password | password_hash('argon2') }}
+    email: {{ user.email }}
+    groups: {{ user.groups | to_json }}
+{% endfor %} 

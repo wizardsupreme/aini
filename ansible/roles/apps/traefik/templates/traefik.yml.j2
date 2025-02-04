@@ -5,7 +5,7 @@ global:
 
 api:
   dashboard: true
-  debug: {{ traefik_debug | lower }}
+  insecure: false
 
 entryPoints:
   web:
@@ -15,9 +15,16 @@ entryPoints:
         entryPoint:
           to: websecure
           scheme: https
+          permanent: true
 
   websecure:
     address: ":443"
+    http:
+      tls:
+        certResolver: letsencrypt
+        domains:
+          - main: "{{ domain }}"
+            sans: ["*.{{ domain }}"]
 
 log:
   level: INFO
@@ -27,18 +34,24 @@ accessLog: {}
 providers:
   docker:
     endpoint: "unix:///var/run/docker.sock"
-    watch: true
     exposedByDefault: false
     network: traefik-public
+    watch: true
   file:
-    directory: /etc/traefik/dynamic
+    directory: "/etc/traefik/dynamic"
     watch: true
 
 certificatesResolvers:
   letsencrypt:
     acme:
-      email: {{ acme_email }}
-      storage: /etc/traefik/certs/acme.json
+      email: "admin@{{ domain }}"
+      storage: "/certificates/acme.json"
+      keyType: "EC384"
+      dnsChallenge:
+        provider: hetzner
+        resolvers:
+          - "1.1.1.1:53"
+          - "8.8.8.8:53"
       httpChallenge:
         entryPoint: web
 

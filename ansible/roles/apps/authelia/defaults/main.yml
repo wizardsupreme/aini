@@ -1,0 +1,14 @@
+---
+authelia_version: "latest"
+authelia_jwt_secret: "{{ vault_authelia_jwt_secret }}"
+authelia_session_secret: "{{ vault_authelia_session_secret }}"
+authelia_storage_encryption_key: "{{ vault_authelia_storage_encryption_key }}"
+
+# Default admin user
+authelia_users:
+  admin:
+    password: "{{ vault_authelia_admin_password }}"
+    displayname: "Admin User"
+    email: "admin@yaml.space"
+    groups:
+      - admins 

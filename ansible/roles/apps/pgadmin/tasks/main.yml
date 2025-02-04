@@ -1,0 +1,49 @@
+---
+- name: Create pgAdmin directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+    owner: "5050"  # pgAdmin container runs as UID 5050
+    group: "5050"  # pgAdmin container runs as GID 5050
+  loop:
+    - /opt/pgadmin
+    - "{{ pgadmin_data_path }}"
+    - "{{ pgadmin_data_path }}/sessions"
+    - "{{ pgadmin_data_path }}/storage"
+
+- name: Debug auth configuration
+  debug:
+    msg: 
+      - "Username: {{ pgadmin_basic_auth_username }}"
+      - "Auth Users String: {{ pgadmin_basic_auth_users }}"
+
+- name: Template docker-compose.yml
+  template:
+    src: docker-compose.yml.j2
+    dest: /opt/pgadmin/docker-compose.yml
+    mode: '0644'
+
+- name: Template servers.json
+  template:
+    src: servers.json.j2
+    dest: "{{ pgadmin_data_path }}/servers.json"
+    mode: '0644'
+    owner: "5050"
+    group: "5050"
+
+- name: Create pgpass file
+  template:
+    src: pgpass.j2
+    dest: "{{ pgadmin_data_path }}/pgpass"
+    mode: '0600'
+    owner: "5050"
+    group: "5050"
+
+- name: Deploy pgAdmin
+  community.docker.docker_compose_v2:
+    project_src: /opt/pgadmin
+    state: present
+    pull: "missing"
+    remove_orphans: true
+    recreate: always 

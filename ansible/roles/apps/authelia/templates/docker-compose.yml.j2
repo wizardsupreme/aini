@@ -1,0 +1,24 @@
+---
+version: '3.8'
+
+services:
+  authelia:
+    image: authelia/authelia:${AUTHELIA_VERSION:-latest}
+    container_name: authelia
+    volumes:
+      - ./config:/config
+    networks:
+      - traefik_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.authelia.rule=Host(`auth.{{ domain }}`)"
+      - "traefik.http.routers.authelia.entrypoints=websecure"
+      - "traefik.http.routers.authelia.tls.certresolver=letsencrypt"
+      - "traefik.http.middlewares.authelia.forwardauth.address=http://authelia:9091/api/verify?rd=https://auth.{{ domain }}"
+      - "traefik.http.middlewares.authelia.forwardauth.trustForwardHeader=true"
+      - "traefik.http.middlewares.authelia.forwardauth.authResponseHeaders=Remote-User,Remote-Groups,Remote-Name,Remote-Email"
+
+networks:
+  traefik_network:
+    external: true
+    name: traefik-public 

@@ -1,2 +1,4 @@
 ---
 domain: "yaml.space"
+traefik_username: "{{ vault_traefik_username }}"
+traefik_password: "{{ vault_traefik_password }}"

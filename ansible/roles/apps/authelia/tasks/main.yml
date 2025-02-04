@@ -1,0 +1,32 @@
+---
+- name: Create Authelia directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - /opt/authelia
+    - /opt/authelia/config
+
+- name: Template Authelia configuration files
+  template:
+    src: "{{ item.src }}"
+    dest: "/opt/authelia/config/{{ item.dest }}"
+    mode: '0644'
+  loop:
+    - { src: configuration.yml.j2, dest: configuration.yml }
+    - { src: users_database.yml.j2, dest: users_database.yml }
+
+- name: Template docker-compose.yml
+  template:
+    src: docker-compose.yml.j2
+    dest: /opt/authelia/docker-compose.yml
+    mode: '0644'
+
+- name: Deploy Authelia
+  community.docker.docker_compose_v2:
+    project_src: /opt/authelia
+    state: present
+    pull: "missing"
+    remove_orphans: true
+    recreate: always 

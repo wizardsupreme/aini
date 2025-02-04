@@ -62,3 +62,13 @@
   import_role:
     name: apps/nocodb
   tags: ['nocodb']
+
+- name: Deploy PostgreSQL Admin
+  import_role:
+    name: apps/pgadmin
+  tags: ['pgadmin']
+
+- name: Deploy Authelia
+  import_role:
+    name: apps/authelia
+  tags: ['authelia']

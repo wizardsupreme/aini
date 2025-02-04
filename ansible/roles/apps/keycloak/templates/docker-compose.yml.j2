@@ -1,0 +1,53 @@
+---
+version: '3.8'
+
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    container_name: keycloak
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: "{{ vault_keycloak_admin_password }}"
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: "{{ vault_keycloak_db_password }}"
+      KC_HOSTNAME: auth.{{ domain }}
+    command:
+      - start
+      - --hostname=auth.{{ domain }}
+      - --proxy=edge
+    networks:
+      - traefik-public
+      - internal
+    depends_on:
+      - keycloak-db
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.keycloak.rule=Host(`auth.{{ domain }}`)"
+      - "traefik.http.routers.keycloak.entrypoints=websecure"
+      - "traefik.http.routers.keycloak.tls.certresolver=letsencrypt"
+      - "traefik.http.services.keycloak.loadbalancer.server.port=8080"
+
+  keycloak-db:
+    image: postgres:15-alpine
+    container_name: keycloak-db
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: "{{ vault_keycloak_db_password }}"
+    volumes:
+      - keycloak-db:/var/lib/postgresql/data
+    networks:
+      - internal
+
+networks:
+  traefik-public:
+    external: true
+  internal:
+    name: keycloak-internal
+    internal: true
+
+volumes:
+  keycloak-db:
+    name: keycloak-db 
