@@ -1,0 +1,19 @@
+---
+# Website Configuration
+website_version: "latest"
+github_username: "wizardsupreme"
+website_platform: "linux/arm64"  # Override if needed for different environments
+
+# Content Configuration
+website_content:
+  title: "YAML.space - AI Development Stack"
+  description: "An integrated suite of AI development tools"
+  features:
+    - title: "Nextcloud Integration"
+      description: "Secure file storage and collaboration"
+    - title: "LibreChat"
+      description: "Advanced AI chat interface"
+    - title: "NocoDB"
+      description: "Open-source Airtable alternative"
+    - title: "Authentication"
+      description: "Secure access with Authelia" 

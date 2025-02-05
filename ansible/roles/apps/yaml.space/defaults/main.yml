@@ -1,0 +1,5 @@
+---
+website_version: "latest"
+website_port: 3000
+website_domain: "{{ domain }}"
+website_platform: "linux/arm64"  # Default platform 

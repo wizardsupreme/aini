@@ -1,0 +1,29 @@
+---
+services:
+  yaml-space:
+    image: ghcr.io/wizardsupreme/yaml-space:${WEBSITE_VERSION:-latest}
+    platform: {{ website_platform }}
+    container_name: yaml-space
+    restart: unless-stopped
+    networks:
+      - traefik-public
+    labels:
+      - "traefik.enable=true"
+      # HTTP Router
+      - "traefik.http.routers.yaml-space-http.rule=Host(`{{ website_domain }}`)"
+      - "traefik.http.routers.yaml-space-http.entrypoints=web"
+      - "traefik.http.routers.yaml-space-http.middlewares=https-redirect@file"
+      
+      # HTTPS Router
+      - "traefik.http.routers.yaml-space.rule=Host(`{{ website_domain }}`)"
+      - "traefik.http.routers.yaml-space.entrypoints=websecure"
+      - "traefik.http.routers.yaml-space.tls=true"
+      - "traefik.http.routers.yaml-space.tls.certresolver=letsencrypt"
+      
+      # Service
+      - "traefik.http.services.yaml-space.loadbalancer.server.port={{ website_port }}"
+      - "traefik.docker.network=traefik-public"
+
+networks:
+  traefik-public:
+    external: true 

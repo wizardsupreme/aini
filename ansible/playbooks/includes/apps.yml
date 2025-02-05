@@ -72,3 +72,8 @@
   import_role:
     name: apps/authelia
   tags: ['authelia']
+
+- name: Deploy YAML.space
+  import_role:
+    name: apps/yaml.space
+  tags: ['yaml.space']
