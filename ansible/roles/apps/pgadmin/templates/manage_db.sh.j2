@@ -1,0 +1,12 @@
+#!/bin/bash
+set -e
+
+echo "Starting database management script..."
+echo "Using host: $PGHOST"
+echo "Using user: $PGUSER"
+echo "Using database: $PGDATABASE"
+
+# Run the SQL script with verbose output
+psql -d postgres -v ON_ERROR_STOP=1 -a -f /scripts/create_databases.sql
+
+echo "Database management complete" 

@@ -12,12 +12,6 @@
     - "{{ pgadmin_data_path }}/sessions"
     - "{{ pgadmin_data_path }}/storage"
 
-- name: Debug auth configuration
-  debug:
-    msg: 
-      - "Username: {{ pgadmin_basic_auth_username }}"
-      - "Auth Users String: {{ pgadmin_basic_auth_users }}"
-
 - name: Template docker-compose.yml
   template:
     src: docker-compose.yml.j2
@@ -46,4 +40,8 @@
     state: present
     pull: "missing"
     remove_orphans: true
-    recreate: always 
+    recreate: "auto"
+
+- name: Include database management tasks
+  include_tasks: manage_databases.yml
+  tags: ['db_setup'] 

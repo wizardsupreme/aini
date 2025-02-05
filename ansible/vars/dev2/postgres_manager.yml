@@ -1,0 +1,13 @@
+---
+# Database connection details (these will pull from secrets)
+postgres_host: "{{ vault_postgres_host }}"
+postgres_admin_user: "db_manager"  # We use db_manager, not the master postgres user
+postgres_admin_password: "{{ vault_postgres_admin_password }}"
+
+# Database definitions
+postgres_databases:
+  librechat: {}  # Just needs default public schema
+  nocodb:
+    schemas:  # Only specify schemas when you need additional ones
+      - analytics
+  outliner: {}  # Just needs default public schema

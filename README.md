@@ -444,3 +444,64 @@ When requesting AI assistance to add new application stacks to this Ansible conf
 - Use standard Docker Compose v2 syntax
 - Include appropriate tags for selective deployment
 - Document any special requirements or dependencies
+
+## Database Management
+
+### PgAdmin Role
+
+The `apps/pgadmin` role serves two purposes:
+1. Deploys a pgAdmin web interface for database management
+2. Handles automated database and user creation
+
+#### Database Configuration
+
+Databases are defined in `vars/dev2/postgres_manager.yml`:
+
+```yaml
+postgres_databases:
+  myapp: {}  # Uses default public schema only
+  analytics:
+    schemas:  # Specify additional schemas if needed
+      - reporting
+      - metrics
+```
+
+Each database:
+- Gets its own user with the same name as the database
+- Has its password defined in `vars/dev2/secrets.yml` as `vault_<dbname>_db_password`
+- Automatically gets a public schema with full privileges
+- Can have additional schemas specified if needed
+
+#### How It Works
+
+1. **Database Creation**
+   - Uses a temporary PostgreSQL client container
+   - Connects as postgres superuser
+   - Creates users, databases, and schemas
+   - Sets proper ownership and privileges
+
+2. **PgAdmin Web Interface**
+   - Provides web-based database management at `pgadmin.<domain>`
+   - Credentials configured in secrets.yml:
+     - `vault_pgadmin_password`: For pgAdmin login
+     - `vault_pgadmin_basic_auth_password`: For HTTP basic auth
+
+#### Usage
+
+To manage databases:
+```bash
+# Deploy pgAdmin and create/update databases
+ansible-playbook playbooks/deploy.yml --tags pgadmin,db_setup
+
+# Just deploy pgAdmin without database changes
+ansible-playbook playbooks/deploy.yml --tags pgadmin
+
+# Access web interface
+https://pgadmin.<your-domain>
+```
+
+#### Security Notes
+
+- Database passwords are stored in vault-encrypted secrets
+- PgAdmin is protected by both application login and HTTP basic auth
+- Database operations use temporary containers that are removed after use

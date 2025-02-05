@@ -1,0 +1,10 @@
+#!/bin/bash
+# WARNING: This script provides database management capabilities.
+# It should only be installed when needed and removed after use.
+
+docker run --rm -it \
+  -v {{ pgadmin_data_path }}/create_databases.sql:/scripts/create_databases.sql:ro \
+  -e PGPASSWORD="{{ postgres_admin_password }}" \
+  -e PGHOST="{{ postgres_host }}" \
+  -e PGUSER="{{ postgres_admin_user }}" \
+  postgres:15 psql 

@@ -1,0 +1,31 @@
+---
+- name: Template create_databases SQL
+  template:
+    src: create_databases.sql.j2
+    dest: "{{ pgadmin_data_path }}/create_databases.sql"
+    mode: '0644'
+  tags: ['db_setup']
+
+- name: Template database management script
+  template:
+    src: manage_db.sh.j2
+    dest: "{{ pgadmin_data_path }}/manage_db.sh"
+    mode: '0755'
+  tags: ['db_setup']
+
+- name: Create databases and users
+  community.docker.docker_container:
+    name: psql_client
+    image: postgres:15
+    command: /scripts/manage_db.sh
+    env:
+      PGPASSWORD: "{{ vault_postgres_password }}"
+      PGHOST: "{{ postgres_host }}"
+      PGUSER: "postgres"
+      PGDATABASE: "postgres"
+    volumes:
+      - "{{ pgadmin_data_path }}/create_databases.sql:/scripts/create_databases.sql:ro"
+      - "{{ pgadmin_data_path }}/manage_db.sh:/scripts/manage_db.sh:ro"
+    detach: false
+  register: db_result
+  tags: ['db_setup']
