@@ -36,4 +36,4 @@ nocodb_settings:
   nc_auth_jwt_secret: "{{ vault_nocodb_jwt_secret }}"
   nc_worker_count: 1
   nc_cache_store: "redis"
-  nc_redis_url: "redis://nocodb-redis:6379" 
+  nc_redis_url: "redis://nocodb-redis:6379"

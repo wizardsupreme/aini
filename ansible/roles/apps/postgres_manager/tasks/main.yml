@@ -2,14 +2,14 @@
 - name: Template create_databases SQL
   template:
     src: create_databases.sql.j2
-    dest: "{{ pgadmin_data_path }}/create_databases.sql"
+    dest: "/tmp/create_databases.sql"
     mode: '0644'
   tags: ['db_setup']
 
 - name: Template database management script
   template:
     src: manage_db.sh.j2
-    dest: "{{ pgadmin_data_path }}/manage_db.sh"
+    dest: "/tmp/manage_db.sh"
     mode: '0755'
   tags: ['db_setup']
 
@@ -24,8 +24,17 @@
       PGUSER: "postgres"
       PGDATABASE: "postgres"
     volumes:
-      - "{{ pgadmin_data_path }}/create_databases.sql:/scripts/create_databases.sql:ro"
-      - "{{ pgadmin_data_path }}/manage_db.sh:/scripts/manage_db.sh:ro"
+      - "/tmp/create_databases.sql:/scripts/create_databases.sql:ro"
+      - "/tmp/manage_db.sh:/scripts/manage_db.sh:ro"
     detach: false
   register: db_result
   tags: ['db_setup']
+
+- name: Cleanup temporary files
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "/tmp/create_databases.sql"
+    - "/tmp/manage_db.sh"
+  tags: ['db_setup'] 

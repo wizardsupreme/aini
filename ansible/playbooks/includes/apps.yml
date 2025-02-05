@@ -68,6 +68,11 @@
     name: apps/pgadmin
   tags: ['pgadmin']
 
+- name: Run PostgreSQL Manager
+  import_role:
+    name: apps/postgres_manager
+  tags: ['postgres_manager']
+
 - name: Deploy Authelia
   import_role:
     name: apps/authelia

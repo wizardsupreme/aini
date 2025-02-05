@@ -28,4 +28,4 @@
   tasks:
     - name: Include apps tasks
       include_tasks: includes/apps.yml
-      tags: ['base','traefik','netdata','grafana','nextcloud','onlyoffice','portainer','cadvisor','librechat','nocodb', 'pgadmin', 'authelia', 'yaml.space']
+      tags: ['base','traefik','netdata','grafana','nextcloud','onlyoffice','portainer','cadvisor','librechat','nocodb', 'pgadmin', 'authelia', 'yaml.space', 'postgres_manager']

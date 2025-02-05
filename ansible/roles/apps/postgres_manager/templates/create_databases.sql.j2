@@ -1,0 +1,89 @@
+-- Debug header to verify script execution
+\echo 'Starting database creation script...'
+
+{% for db_name, db_config in postgres_databases.items() %}
+\echo 'Processing {{ db_name }}...'
+
+-- Create user and database for {{ db_name }}
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT FROM pg_user WHERE usename = '{{ db_name }}') THEN
+    EXECUTE format('CREATE USER {{ db_name }} WITH CREATEDB CREATEROLE PASSWORD ''{{ lookup('vars', 'vault_' + db_name + '_db_password') }}''');
+    RAISE NOTICE 'Created user {{ db_name }}';
+  END IF;
+END
+$$;
+
+-- Create database if it doesn't exist
+SELECT 'CREATE DATABASE {{ db_name }} OWNER {{ db_name }}'
+WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '{{ db_name }}')
+\gexec
+
+\echo 'Connecting to {{ db_name }}...'
+\c {{ db_name }}
+
+-- Set up permissions as superuser first
+SET ROLE postgres;
+
+-- Grant schema creation and usage rights
+GRANT CREATE ON DATABASE {{ db_name }} TO {{ db_name }};
+
+-- Set user as owner of existing schemas and grant permissions
+DO $$
+DECLARE
+    schema_name text;
+BEGIN
+    FOR schema_name IN 
+        SELECT nspname 
+        FROM pg_namespace 
+        WHERE nspname NOT LIKE 'pg_%' 
+        AND nspname != 'information_schema'
+    LOOP
+        EXECUTE format('ALTER SCHEMA %I OWNER TO {{ db_name }}', schema_name);
+        EXECUTE format('GRANT ALL PRIVILEGES ON SCHEMA %I TO {{ db_name }}', schema_name);
+        EXECUTE format('GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA %I TO {{ db_name }}', schema_name);
+        EXECUTE format('GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA %I TO {{ db_name }}', schema_name);
+        EXECUTE format('GRANT ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA %I TO {{ db_name }}', schema_name);
+    END LOOP;
+END $$;
+
+-- Set default privileges as postgres user
+ALTER DEFAULT PRIVILEGES 
+GRANT ALL PRIVILEGES ON TABLES TO {{ db_name }};
+
+ALTER DEFAULT PRIVILEGES 
+GRANT ALL PRIVILEGES ON SEQUENCES TO {{ db_name }};
+
+ALTER DEFAULT PRIVILEGES 
+GRANT ALL PRIVILEGES ON FUNCTIONS TO {{ db_name }};
+
+-- Make user owner of all existing tables
+DO $$
+DECLARE
+    r RECORD;
+BEGIN
+    FOR r IN SELECT tablename FROM pg_tables WHERE schemaname = 'public'
+    LOOP
+        EXECUTE 'ALTER TABLE public.' || quote_ident(r.tablename) || ' OWNER TO {{ db_name }}';
+    END LOOP;
+END $$;
+
+{% if db_config.schemas is defined %}
+{% for schema in db_config.schemas %}
+\echo 'Creating additional schema {{ schema }}...'
+-- Create schema as postgres user first
+CREATE SCHEMA IF NOT EXISTS {{ schema }};
+-- Then grant ownership to the app user
+ALTER SCHEMA {{ schema }} OWNER TO {{ db_name }};
+-- Grant privileges
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA {{ schema }} TO {{ db_name }};
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA {{ schema }} TO {{ db_name }};
+ALTER DEFAULT PRIVILEGES IN SCHEMA {{ schema }} GRANT ALL PRIVILEGES ON TABLES TO {{ db_name }};
+ALTER DEFAULT PRIVILEGES IN SCHEMA {{ schema }} GRANT USAGE, SELECT ON SEQUENCES TO {{ db_name }};
+{% endfor %}
+{% endif %}
+
+\echo 'Finished processing {{ db_name }}'
+{% endfor %}
+
+\echo 'Script execution complete.' 
