@@ -3,15 +3,13 @@
 nocodb_version: "latest"
 nocodb_web_port: 8080
 
-# Database Configuration (Supabase)
+# Database Configuration (AWS RDS)
 nocodb_db_type: "postgres"
-nocodb_db_host: "aws-0-eu-central-1.pooler.supabase.com"  # Removed the 'db.' prefix
-nocodb_db_port: "6543"
-nocodb_db_name: "postgres"  # Using the default Supabase database name
-nocodb_db_user: "postgres.ipzxotbigorrlcswdchx"
+nocodb_db_host: "{{ vault_postgres_host }}"
+nocodb_db_port: "5432"
+nocodb_db_name: "nocodb"  # Using the AWS Database name
+nocodb_db_user: "nocodb"
 nocodb_db_password: "{{ vault_nocodb_db_password }}"
-
-nocodb_db_root_password: "{{ vault_nocodb_db_root_password }}"
 
 # Domain Configuration
 nocodb_domain: "db.{{ domain }}"

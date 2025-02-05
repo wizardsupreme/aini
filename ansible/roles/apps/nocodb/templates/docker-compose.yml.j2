@@ -1,9 +1,7 @@
 ---
-version: '3.8'
-
 services:
   nocodb:
-    image: nocodb/nocodb:${NOCODB_VERSION:-{{ nocodb_version }}}
+    image: nocodb/nocodb:0.260.4
     container_name: nocodb
     restart: unless-stopped
     depends_on:
@@ -11,7 +9,13 @@ services:
     expose:
       - "8080"
     environment:
-      NC_DB: "pg://{{ nocodb_db_host }}:{{ nocodb_db_port }}?u={{ nocodb_db_user }}&p={{ nocodb_db_password }}&d={{ nocodb_db_name }}&pool.min=0&pool.max=5&pool.idleTimeoutMillis=30000"
+      NC_DB_TYPE: "pg"
+      NC_DB_HOST: "{{ nocodb_db_host }}"
+      NC_DB_PORT: "{{ nocodb_db_port }}"
+      NC_DB_USER: "{{ nocodb_db_user }}"
+      NC_DB_PASSWORD: "{{ nocodb_db_password | urlencode }}"
+      NC_DB_NAME: "{{ nocodb_db_name }}"
+      NC_DB_SCHEMA: "public"
       NC_PUBLIC_URL: "{{ nocodb_settings.nc_public_url }}"
       NC_AUTH_JWT_SECRET: "{{ nocodb_settings.nc_auth_jwt_secret }}"
       NC_WORKER_COUNT: "{{ nocodb_settings.nc_worker_count }}"
@@ -20,6 +24,8 @@ services:
       NC_CONNECTION_TIMEOUT: "60000"
       NC_POOL_TIMEOUT: "60000"
       PORT: 8080
+      NC_AUTOMATION_LOG_LEVEL: "ERROR"
+      NC_DISABLE_TELE: "true"
     volumes:
       - {{ nocodb_data_path }}:/usr/app/data
     deploy:
@@ -48,7 +54,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: {{ nocodb_redis.memory }}
+          memory: "{{ nocodb_redis.memory | regex_replace('([0-9]+)([A-Za-z]+)', '\\1\\2') }}"
     networks:
       - traefik_network
 
