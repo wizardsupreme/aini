@@ -12,7 +12,6 @@ services:
       # HTTP Router
       - "traefik.http.routers.yaml-space-http.rule=Host(`{{ website_domain }}`) || Host(`www.{{ website_domain }}`)"
       - "traefik.http.routers.yaml-space-http.entrypoints=web"
-      - "traefik.http.routers.yaml-space-http.middlewares=https-redirect@file"
       
       # HTTPS Router
       - "traefik.http.routers.yaml-space.rule=Host(`{{ website_domain }}`) || Host(`www.{{ website_domain }}`)"
