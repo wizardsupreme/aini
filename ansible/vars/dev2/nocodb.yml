@@ -3,13 +3,12 @@
 nocodb_version: "latest"
 nocodb_web_port: 8080
 
-# Database Configuration (AWS RDS)
-nocodb_db_type: "postgres"
-nocodb_db_host: "{{ vault_postgres_host }}"
-nocodb_db_port: "5432"
-nocodb_db_name: "nocodb"  # Using the AWS Database name
+# Database Configuration
+nocodb_db_type: "postgres"  # can be postgres or mysql
+nocodb_db_name: "nocodb"
 nocodb_db_user: "nocodb"
 nocodb_db_password: "{{ vault_nocodb_db_password }}"
+nocodb_db_root_password: "{{ vault_nocodb_db_root_password }}"
 
 # Domain Configuration
 nocodb_domain: "db.{{ domain }}"
@@ -36,4 +35,4 @@ nocodb_settings:
   nc_auth_jwt_secret: "{{ vault_nocodb_jwt_secret }}"
   nc_worker_count: 1
   nc_cache_store: "redis"
-  nc_redis_url: "redis://nocodb-redis:6379"
+  nc_redis_url: "redis://nocodb-redis:6379" 
