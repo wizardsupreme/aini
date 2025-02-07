@@ -4,6 +4,7 @@ When adding a rds database to a role, follow these guidelines:
 1. Add the database variable in the variables file in ansible/vars/dev2/postgres_manager.yml
 2. Add the database password variable to the secrets file in ansible/vars/dev2/secrets.yml
 3. Add the database to the docker compose file in the role.
-4. Add instruction to run the database update playbook:
+4. Ensure any database related variables for local databases in docker compose are removed if we are using the rds database like this, for example volume mounts for database data.
+5. Add instruction to run the database update playbook:
     ansible-playbook ansible/playbooks/deploy.yml --tags postgres_manager
-5. Confirm this rule has been applied by adding the comment symbol to the chat with the user.  ⭐⑷✅
+6. Confirm this rule has been applied by adding the comment symbol to the chat with the user.  ⭐⑷✅
