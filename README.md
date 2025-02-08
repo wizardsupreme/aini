@@ -99,36 +99,63 @@ source .venv/bin/activate
 uv pip install -r requirements.txt
 ```
 
-## Git-Crypt Setup
+## Git-Crypt Configuration
 
-1. Install git-crypt:
-```bash
-# macOS
-brew install git-crypt
+This repository uses [git-crypt](https://github.com/AGWA/git-crypt) to encrypt sensitive files. Below are instructions for setting up and managing git-crypt.
 
-# Ubuntu/Debian
-apt-get install git-crypt
-```
+### Prerequisites
+- Install git-crypt on your system:
+  - **Linux (Debian/Ubuntu)**: `sudo apt-get install git-crypt`
+  - **macOS (Homebrew)**: `brew install git-crypt`
+  - **Windows (Chocolatey)**: `choco install git-crypt`
+- Ensure you have a GPG key pair (public and private keys).
 
-2. Initialize git-crypt in your repository:
-```bash
-git-crypt init
-```
+### Adding a New User
+1. **Export your public key**:
+   ```bash
+   gpg --export --armor <YOUR_KEY_ID> > my-public-key.asc
+   ```
+   Share the `my-public-key.asc` file with the repository maintainer.
 
-3. Configure .gitattributes:
-```
-ansible/vars/dev2/secrets.yml filter=git-crypt diff=git-crypt
-```
+2. **Repository maintainer adds your key**:
+   ```bash
+   gpg --import my-public-key.asc
+   git-crypt add-gpg-user --trusted <YOUR_KEY_ID>
+   git commit -m "Added new user to git-crypt"
+   git push
+   ```
 
-4. Add trusted GPG keys:
-```bash
-git-crypt add-gpg-user USER_ID
-```
+### Unlocking the Repository
+1. **Clone the repository**:
+   ```bash
+   git clone <repository-url>
+   ```
 
-5. Unlock repository after cloning:
-```bash
-git-crypt unlock
-```
+2. **Unlock the repository**:
+   ```bash
+   git-crypt unlock
+   ```
+   This will decrypt the files using your private GPG key.
+
+### Managing Encrypted Files
+- **Encrypt new files**: Add the file pattern to `.gitattributes`. For example:
+  ```plaintext
+  *.secret filter=git-crypt diff=git-crypt
+  ```
+- **Check encryption status**:
+  ```bash
+  git-crypt status
+  ```
+
+### Troubleshooting
+- **Can't unlock the repository?**
+  - Ensure your private GPG key is imported: `gpg --import your-private-key.asc`
+  - Verify your key is in the keyring: `git-crypt ls-gpg-users`
+- **Files still encrypted?**
+  - Ensure you pulled the latest changes: `git pull`
+  - Confirm the files are encrypted: `git-crypt status`
+
+For more details, refer to the [git-crypt documentation](https://github.com/AGWA/git-crypt).
 
 ## Supabase Setup
 
