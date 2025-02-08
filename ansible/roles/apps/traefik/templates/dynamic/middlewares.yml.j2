@@ -3,16 +3,15 @@ http:
   middlewares:
     security-headers:
       headers:
+        sslRedirect: true
         stsSeconds: 31536000
-        browserXssFilter: true
-        contentTypeNosniff: true
-        forceSTSHeader: true
         stsIncludeSubdomains: true
         stsPreload: true
-        customFrameOptionsValue: "SAMEORIGIN"
-        customResponseHeaders:
-          X-Robots-Tag: "none,noarchive,nosnippet,notranslate,noimageindex"
-          server: ""
+        forceSTSHeader: true
+        frameDeny: true
+        contentTypeNosniff: true
+        browserXssFilter: true
+        referrerPolicy: "strict-origin-when-cross-origin"
 
     secured:
       chain:

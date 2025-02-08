@@ -1,0 +1,23 @@
+---
+- name: Create n8n directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - /opt/n8n
+    - /opt/n8n/config
+
+- name: Template docker-compose.yml
+  template:
+    src: docker-compose.yml.j2
+    dest: /opt/n8n/docker-compose.yml
+    mode: '0644'
+
+- name: Start n8n service
+  community.docker.docker_compose_v2:
+    project_src: /opt/n8n
+    state: present
+    pull: "missing"
+    remove_orphans: true
+    recreate: always 

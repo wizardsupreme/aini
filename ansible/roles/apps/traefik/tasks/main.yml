@@ -94,3 +94,15 @@
 - name: Debug auth string
   debug:
     msg: "Auth string: {{ traefik_username }}:{{ traefik_password | password_hash('apr_md5_crypt') }}"
+
+- name: Create dynamic config directory
+  file:
+    path: /opt/traefik/dynamic
+    state: directory
+    mode: '0755'
+
+- name: Deploy middleware configuration
+  template:
+    src: dynamic/middlewares.yml.j2
+    dest: /opt/traefik/dynamic/middlewares.yml
+    mode: '0644'

@@ -1,0 +1,17 @@
+---
+# Version and base configuration
+n8n_version: "latest"
+timezone: "Europe/London"
+
+# Authentication
+n8n_basic_auth_active: true
+n8n_basic_auth_user: "admin"
+
+# Database configuration
+n8n_db_name: "n8n"
+n8n_db_user: "n8n"
+postgres_host: "postgres.example.com"
+postgres_port: 5432
+
+# Traefik configuration
+n8n_subdomain: "n8n" 

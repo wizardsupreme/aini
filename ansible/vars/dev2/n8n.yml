@@ -1,0 +1,10 @@
+---
+n8n_subdomain: n8n
+n8n_basic_auth_active: true
+n8n_basic_auth_user: "admin"
+n8n_db_name: n8n
+n8n_db_user: n8n
+# Local DB config handled in docker-compose
+n8n_db_password: "{{ vault_n8n_db_password }}"
+n8n_basic_auth_password: "{{ vault_n8n_basic_auth_password }}"
+n8n_db_data_path: /opt/n8n/db

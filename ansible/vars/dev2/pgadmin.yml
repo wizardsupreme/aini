@@ -13,6 +13,7 @@ pgadmin_basic_auth_username: "admin"
 pgadmin_basic_auth_password: "{{ vault_pgadmin_basic_auth_password }}"
 pgadmin_basic_auth_users: "admin:$apr1$kX9kfzRe7$WpzJ89FQXZ3YqK1KzJ.Dk1"  # This is a hash for 'aini185!PgAdminBasicAuth'
 
+
 # Server configuration
 pgadmin_servers_json: |
   {
@@ -24,8 +25,16 @@ pgadmin_servers_json: |
         "Port": 5432,
         "MaintenanceDB": "postgres",
         "Username": "postgres",
-        "SSLMode": "prefer",
-        "PassFile": "/pgpassfile"
+        "SSLMode": "prefer"
+      },
+      "2": {
+        "Name": "Local n8n DB",
+        "Group": "Local",
+        "Host": "n8n-db",
+        "Port": 5432,
+        "MaintenanceDB": "n8n",
+        "Username": "n8n",
+        "SSLMode": "prefer"
       }
     }
   } 

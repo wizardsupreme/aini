@@ -40,8 +40,4 @@
     state: present
     pull: "missing"
     remove_orphans: true
-    recreate: "auto"
-
-- name: Include database management tasks
-  include_tasks: manage_databases.yml
-  tags: ['db_setup'] 
+    recreate: "always"
