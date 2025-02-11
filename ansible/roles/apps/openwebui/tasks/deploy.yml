@@ -1,0 +1,4 @@
+- name: Create OpenWebUI container
+  docker_compose:
+    project_src: "{{ role_path }}/templates"
+    state: present 
