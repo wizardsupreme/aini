@@ -1,5 +1,5 @@
 ---
 - name: Deploy Traefik
-  include_role:
+  import_role:
     name: apps/traefik
   tags: ['traefik']

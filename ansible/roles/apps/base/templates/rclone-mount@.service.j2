@@ -1,0 +1,18 @@
+[Unit]
+Description=rclone mount for %i
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/rclone mount r2:{{ item.bucket }} {{ item.path }} \
+  --config /etc/rclone/rclone.conf \
+  --{{ item.opts }} \
+  --vfs-cache-mode writes \
+  --uid {{ item.owner_uid | default(33) }} \
+  --gid {{ item.group_gid | default(33) }}
+ExecStop=/bin/fusermount -u {{ item.path }}
+Restart=on-abort
+User=root
+
+[Install]
+WantedBy=multi-user.target 

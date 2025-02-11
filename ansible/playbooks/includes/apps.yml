@@ -5,11 +5,11 @@
   tags:
     - base
 
-- name: Deploy Traefik
-  import_role:
-    name: apps/traefik
-  tags:
-    - traefik
+# - name: Deploy Traefik
+#   import_role:
+#     name: apps/traefik
+#   tags:
+#     - traefik
 
 # - name: Deploy Consul
 #   include_role:

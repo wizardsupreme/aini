@@ -1,0 +1,6 @@
+packages_to_install:
+  - rclone
+  - fuse3
+  - ca-certificates
+  - curl
+  - wget

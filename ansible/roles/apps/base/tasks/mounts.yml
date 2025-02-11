@@ -8,7 +8,7 @@
     update_cache: yes
   become: true
 
-- name: Mount Volumes
+- name: Mount Hetzner Volumes
   block:
     - name: Create mount points
       file:
@@ -45,4 +45,52 @@
       loop: "{{ mount_wait.results }}"
       when: item.rc != 0 and not item.failed
   become: true
-  when: mounts is defined 
+  when: mounts is defined
+
+- name: Configure S3 mounts
+  block:
+    # Critical rclone configuration tasks
+    - name: Create rclone config directory
+      file:
+        path: /etc/rclone
+        state: directory
+        mode: '0750'
+        owner: root
+        group: root
+
+    - name: Deploy rclone configuration
+      template:
+        src: rclone.conf.j2
+        dest: /etc/rclone/rclone.conf
+        mode: '0600'
+        owner: root
+        group: root
+
+    # Mount setup tasks
+    - name: Create mount directories
+      file:
+        path: "{{ item.path }}"
+        state: directory
+        mode: "{{ item.mode }}"
+        owner: "{{ item.owner }}"
+        group: "{{ item.group }}"
+      loop: "{{ s3_mounts }}"
+      when: item.enabled | default(true)
+
+    - name: Deploy S3 mount services
+      template:
+        src: s3-mount.service.j2
+        dest: "/etc/systemd/system/s3-mount-{{ item.name }}.service"
+      loop: "{{ s3_mounts }}"
+      when: item.enabled | default(true)
+
+    - name: Enable and start S3 mount services
+      systemd:
+        name: "s3-mount-{{ item.name }}"
+        enabled: yes
+        state: started
+        daemon_reload: yes
+      loop: "{{ s3_mounts }}"
+      when: item.enabled | default(true)
+  become: true
+  when: s3_mounts is defined

@@ -1,0 +1,18 @@
+[Unit]
+Description=S3 Mount for {{ item.name }} ({{ item.provider }})
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/rclone mount {{ item.provider }}:{{ item.bucket }} {{ item.path }} \
+  --config /etc/rclone/rclone.conf \
+  {% for opt in item.opts.split(',') %}--{{ opt }} \
+  {% endfor %}
+  --uid {{ item.owner }} \
+  --gid {{ item.group }}
+ExecStop=/bin/fusermount -u {{ item.path }}
+Restart=on-abort
+User=root
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,15 @@
+---
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+  become: true
+  when: packages_to_install is defined
+
+- name: Install packages
+  apt:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ packages_to_install }}"
+  become: true
+  when: packages_to_install is defined 

@@ -6,3 +6,15 @@ mounts:
     fstype: "{{ storage_box_mount.fstype }}"
     opts: "{{ storage_box_mount.opts }}"
     state: "{{ storage_box_mount.state }}"
+
+s3_mounts:
+  - name: "hetzner"
+    provider: "cloudflare"
+    bucket: "hetzner"
+    path: "/mnt/s3-hetzner"
+    opts: "allow-other,vfs-cache-mode writes"
+    owner: "33"
+    group: "33"
+    mode: "0750"
+
+r2_mount_path: /mnt/r2

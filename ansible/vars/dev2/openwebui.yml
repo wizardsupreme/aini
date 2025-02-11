@@ -1,2 +1,2 @@
-openwebui_domain: openwebui.{{ domain }} 
-openwebui_openai_api_key: {{ vault_openai_api_key }} 
+openwebui_domain: "openwebui.{{ domain }}" 
+openwebui_openai_api_key: "{{ vault_openai_api_key }}" 
