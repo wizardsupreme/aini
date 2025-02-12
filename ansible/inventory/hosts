@@ -3,3 +3,6 @@ localhost ansible_connection=local
 
 [app_servers]
 aini-app ansible_host=37.27.245.4 ansible_user=root
+
+[gpu_servers]
+aini-gpu ansible_host=67.79.33.78 ansible_user=root ansible_port=45958

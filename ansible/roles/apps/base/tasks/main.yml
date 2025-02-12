@@ -12,6 +12,10 @@
     reload: yes
   become: true
 
+- name: Install docker
+  include_tasks: docker.yml
+  tags: docker
+
 - name: Install packages
   include_tasks: install_packages.yml
   tags: packages

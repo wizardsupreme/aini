@@ -1,0 +1,15 @@
+# Apps (including base)
+- name: Manage GPU Servers
+  hosts: gpu_servers
+  gather_facts: true
+  pre_tasks:
+    - include_tasks: includes/load_vars.yml
+      tags: ['always']
+  tasks:  
+    - name: Include common tasks
+      include_tasks: includes/common.yml
+      tags: ['traefik']
+
+    - name: Include apps tasks
+      include_tasks: includes/apps.yml
+      tags: ['base','netdata','grafana','nextcloud','onlyoffice','portainer','cadvisor','librechat','nocodb', 'pgadmin', 'authelia', 'yaml.space', 'postgres_manager', 'n8n']
